@@ -49,11 +49,14 @@ struct Conf
 {
 	ulong   nmach;      /* processors */
 	ulong   nproc;      /* processes */
+	ulong   npage;      /* total physical pages of memory */
 	ulong   npage0;     /* total physical pages of memory */
 	ulong   npage1;     /* total physical pages of memory */
 	ulong   base0;      /* base of bank 0 */
 	ulong   base1;      /* base of bank 1 */
 	ulong   ialloc;     /* max interrupt time allocation in bytes */
+	ulong   topofmem;   /* top addr of memory */
+	int     monitor;    /* flag */
 };
 
 #include "../port/portdat.h"
@@ -65,6 +68,13 @@ struct Mach
 	Proc*   proc;       /* current process on this processor */
 	Label   sched;      /* scheduler wakeup */
 };
+
+struct
+{
+	Lock;
+	int machs;          /* bitmap of active CPUs */
+	int exiting;        /* shutdown */
+} active;
 
 extern Mach *m;
 extern Proc *up;

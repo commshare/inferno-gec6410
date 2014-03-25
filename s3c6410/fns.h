@@ -6,6 +6,6 @@
 
 int		waserror(void);
 void    (*screenputs)(char*, int);
-
+void	(*serwrite)(char*, int);
 #include "../port/portfns.h"
 

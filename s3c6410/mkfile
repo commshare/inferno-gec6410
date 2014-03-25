@@ -16,6 +16,7 @@ OBJ=\
 	load.$O\
 	main.$O\
 	armv6.$O\
+	serial.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\

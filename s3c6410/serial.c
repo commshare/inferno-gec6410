@@ -1,40 +1,4 @@
-#define UART_NR	S3C64XX_UART0
-#define ELFIN_UART_BASE		0x7F005000
-
-typedef volatile unsigned long	vu_long;
-typedef volatile unsigned short vu_short;
-typedef volatile unsigned char	vu_char;
-typedef unsigned long	ulong;
-typedef unsigned short	ushort;
-typedef unsigned char	uchar;
-typedef vu_char		S3C64XX_REG8;
-typedef vu_short	S3C64XX_REG16;
-typedef vu_long		S3C64XX_REG32;
-typedef struct {
-	S3C64XX_REG32	ULCON;
-	S3C64XX_REG32	UCON;
-	S3C64XX_REG32	UFCON;
-	S3C64XX_REG32	UMCON;
-	S3C64XX_REG32	UTRSTAT;
-	S3C64XX_REG32	UERSTAT;
-	S3C64XX_REG32	UFSTAT;
-	S3C64XX_REG32	UMSTAT;
-
-	S3C64XX_REG8	UTXH;
-	S3C64XX_REG8	res1[3];
-	S3C64XX_REG8	URXH;
-	S3C64XX_REG8	res2[3];
-
-	S3C64XX_REG32	UBRDIV;
-	S3C64XX_REG32	UDIVSLOT;
-}	S3C64XX_UART;
-
-typedef enum {
-	S3C64XX_UART0,
-	S3C64XX_UART1,
-	S3C64XX_UART2,
-	S3C64XX_UART3,
-} S3C64XX_UARTS_NR;
+#include "./serial.h"
 
 static inline S3C64XX_UART * S3C64XX_GetBase_UART(S3C64XX_UARTS_NR nr)
 {
@@ -112,7 +76,7 @@ void serial_puts(const char *s)
 	}
 }
 
-void serial_addr(void *addr)
+void serial_addr(void *addr, int type)
 {
 	int i;
 	vu_char *ca = (vu_char *)&addr;
@@ -124,7 +88,11 @@ void serial_addr(void *addr)
 		serial_putc(h < 10 ? h + 0x30 : h - 10 + 0x41);
 		serial_putc(l < 10 ? l + 0x30 : l - 10 + 0x41);
 	}
+	if (type)
+		serial_puts("\n");
+	else serial_puts("\t");
 }
+/*
 void
 serial_putsi(char *s, int n) {
 	serial_puts("??\n");
@@ -134,3 +102,4 @@ serial_putsi(char *s, int n) {
 		serial_putc(*s++);
 	}
 }
+*/

@@ -1,4 +1,4 @@
-#include "serial.c"
+#include "./serial.h"
 #include "./u.h"
 #include "../port/lib.h"
 #include "dat.h"
@@ -37,32 +37,27 @@ confinit(void)
 
 	active.machs = 1;
 	active.exiting = 0;
-
 }
 void 
 main() {
-	/*serial_addr((void *)getpc());*/
-	ulong pc;
-	pc = getpc();
-	serial_addr((void *)pc);
+	serial_puts("Now, PC:");
+	serial_addr((void *)getpc(), 0);
+	serial_puts("SP: ");
+	serial_addr((void *)getsp(), 1);
+	serial_puts("Entered main() at ");
+	serial_addr(&main, 1);
 	serial_puts("Hello world! from s3c6410, Inferno-os\nCompiled by 5c\nModified by dd\n");
-	serial_puts("Entered main() at \n");
-	serial_addr(&main);
-	serial_puts("\nClearing Mach:...\n");
+	serial_puts("Clearing Mach:...\n");
 	memset(m, 0, sizeof(Mach));
-	serial_addr((char *)m);
-	serial_putc('-');
-	serial_addr((char *)(m + 1));
-	serial_puts("\n");
+	serial_addr((char *)m, 0);
+	serial_addr((char *)(m + 1), 1);
 	serial_puts("Clearing edata: \n");
 	memset(edata, 0, end-edata);
-	serial_addr((char *)&edata);
-	serial_puts("\n");
-	serial_addr((char *)&end);
-	serial_puts("\n");
+	serial_addr((char *)&edata, 0);
+	serial_addr((char *)&end, 1);
 	conf.nmach = 1;
 	/* serwrite = &pl011_serputs; WHAT'S THIS????*/
-	serwrite = &serial_putsi;	//IT DOES NOT WORK FOR SOME UNKNOWN REASON
+	//serwrite = &serial_putsi;  This does NOT work for some unkonwn reason
 	confinit();
 	//xinit();
 	//poolinit();
