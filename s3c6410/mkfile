@@ -1,7 +1,7 @@
 <../../mkconfig
 
-CONF=rpi
-CONFLIST=rpi
+CONF=s3c
+CONFLIST=s3c
 loadaddr=0xc0008000
 
 SYSTARG=$OSTARG
@@ -15,6 +15,7 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 OBJ=\
 	load.$O\
 	main.$O\
+	armv6.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\

@@ -1,9 +1,12 @@
 #define UART_NR	S3C64XX_UART0
-#define ELFIN_UART_BASE		0x7F005000		//Four ports.
+#define ELFIN_UART_BASE		0x7F005000
 
 typedef volatile unsigned long	vu_long;
 typedef volatile unsigned short vu_short;
 typedef volatile unsigned char	vu_char;
+typedef unsigned long	ulong;
+typedef unsigned short	ushort;
+typedef unsigned char	uchar;
 typedef vu_char		S3C64XX_REG8;
 typedef vu_short	S3C64XX_REG16;
 typedef vu_long		S3C64XX_REG32;
@@ -35,7 +38,7 @@ typedef enum {
 
 static inline S3C64XX_UART * S3C64XX_GetBase_UART(S3C64XX_UARTS_NR nr)
 {
-	return (S3C64XX_UART *)(ELFIN_UART_BASE + (nr*0x400));			//each ports address.
+	return (S3C64XX_UART *)(ELFIN_UART_BASE + (nr*0x400));
 }
 void serial_setbrg(void)
 {
@@ -59,7 +62,7 @@ int serial_init(void)
 	serial_setbrg();
 	S3C64XX_UART *	uart0;
 	uart0=S3C64XX_GetBase_UART(UART_NR);
-	uart0->ULCON = 0x00000003;			//wrong.	
+	uart0->ULCON = 0x00000003;
 	uart0->UTRSTAT=0x6;
 
 	return (0);
@@ -109,3 +112,25 @@ void serial_puts(const char *s)
 	}
 }
 
+void serial_addr(void *addr)
+{
+	int i;
+	vu_char *ca = (vu_char *)&addr;
+	vu_char h, l;
+	for (i = 3; i >= 0; --i)
+	{
+		h = ca[i] / 16;
+		l = ca[i] % 16;
+		serial_putc(h < 10 ? h + 0x30 : h - 10 + 0x41);
+		serial_putc(l < 10 ? l + 0x30 : l - 10 + 0x41);
+	}
+}
+void
+serial_putsi(char *s, int n) {
+	serial_puts("??\n");
+	while(*s != 0 && n-- >=0) {
+		if (*s == '\n')
+			serial_putc('\r');
+		serial_putc(*s++);
+	}
+}
