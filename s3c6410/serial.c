@@ -92,7 +92,7 @@ void serial_addr(void *addr, int type)
 		serial_puts("\n");
 	else serial_puts("\t");
 }
-/*
+
 void
 serial_putsi(char *s, int n) {
 	serial_puts("??\n");
@@ -102,4 +102,4 @@ serial_putsi(char *s, int n) {
 		serial_putc(*s++);
 	}
 }
-*/
+

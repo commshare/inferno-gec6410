@@ -2,7 +2,7 @@
 
 CONF=s3c
 CONFLIST=s3c
-loadaddr=0xc0008000
+loadaddr=0x50008000
 
 SYSTARG=$OSTARG
 OBJTYPE=arm
@@ -17,6 +17,7 @@ OBJ=\
 	main.$O\
 	armv6.$O\
 	serial.$O\
+	mmu.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\
