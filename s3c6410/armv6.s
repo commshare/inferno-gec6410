@@ -21,6 +21,10 @@ TEXT getsp(SB), $-4
 	MOVW    SP, R0
 	RET
 
+TEXT checksp(SB), $-4
+	MOVW    (SP), R0
+	RET
+
 TEXT getpc(SB), $-4
 	MOVW    R14, R0
 	RET

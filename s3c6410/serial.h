@@ -43,3 +43,4 @@ void serial_putc(const char c);
 int serial_tstc(void);
 void serial_puts(const char *s);
 void serial_addr(void *addr, int type);
+void serial_putsi(char *s, int n);
