@@ -19,3 +19,7 @@
 *.app
 is3c
 skip
+
+#Auto generated source files
+s3c.*
+errstr.h
