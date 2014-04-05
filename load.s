@@ -26,7 +26,8 @@ _ramZ:
 	CMP		R1, R2
 	BNE		_ramZ
 	*/
-	MOVW    $(KTZERO/*-BY2PG*/+4),SP /*! stack; 4 bytes for link */
+	MOVW    $(KTZERO-BY2PG+4),SP /*! stack; 4 bytes for link */
+	//MOVW    $(MACHADDR+BY2PG-4),SP
 	//BL		,mmuinit(SB)
 
 	/* set up domain access control and page table base 

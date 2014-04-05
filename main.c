@@ -11,17 +11,6 @@ extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
 Conf conf;
-void	testofsp(int i)
-{
-	serial_puts("TEST, PC: ");
-	serial_addr((void *)getpc(), 0);
-	serial_puts("SP: ");
-	serial_addr((void *)getsp(), 1);
-	serial_addr((void *)checksp(), 1);
-	if (i)
-		testofsp(i - 1);
-	return;
-}
 static void
 poolsizeinit(void)
 {
@@ -32,11 +21,14 @@ poolsizeinit(void)
 	serial_puts("nb : ");
 	serial_addr((void *)nb, 1);
 	poolsize(mainmem, (nb >> 3) * 3, 0);
-	serial_puts("mainmem\n");
+	serial_puts("mainmem, size:\n");
+	serial_addr((void *)((nb >> 3) * 3), 1);
 	poolsize(heapmem, (nb >> 3) * 2, 0);
-	serial_puts("heapmem\n");
+	serial_puts("heapmem, size:\n");
+	serial_addr((void *)((nb >> 3) * 2), 1);
 	poolsize(imagmem, (nb >> 3) * 3, 1);
-	serial_puts("imagemem\n");
+	serial_puts("imagemem, size:\n");
+	serial_addr((void *)((nb >> 3) * 3), 1);
 }
 void
 confinit(void)
@@ -59,15 +51,18 @@ confinit(void)
 	active.machs = 1;
 	active.exiting = 0;
 	serial_puts("hello from confinit\n");
-/*
+
+	int u = 4;
+	print("%d\n", u);
 	print("Conf: top=%lud, npage0=%lud, ialloc=%lud, nproc=%lud\n",
 			conf.topofmem, conf.npage0,
 			conf.ialloc, conf.nproc);
-*/
+
 
 }
 void 
 main() {
+	//uint rev; Not Now
 	serial_puts("Now, PC: ");
 	serial_addr((void *)getpc(), 0);
 	serial_puts("SP: ");
@@ -89,24 +84,88 @@ main() {
 	serial_addr((char *)&end, 1);
 	serial_addr((char *)&etext, 1);
 	conf.nmach = 1;
-	/* serwrite = &pl011_serputs; WHAT'S THIS????*/
-	//serwrite = &serial_putsi;  //This does NOT work for some unkonwn reason
+	serwrite = &serial_putsi;  //Remember to delete the _div ... in this file
+	//disinit("/osinit.dis"); the dis init here will lead to a painc:error(out of memory: main) not in a process
 	confinit();
-	testofsp(3);
 	xinit();
 	poolinit();
 	poolsizeinit();
+	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
+	//disinit("/osinit.dis"); the dis init will lead to a non-response
+	//printinit();
+	procinit();
+	links();
+	chandevreset();
+	eve = strdup("inferno");
+	userinit();
+	schedinit();
 	serial_puts("Infinite Loop\n");
 	while (1);
 }
+void
+init0(void)
+{
+	Osenv *o;
+	char buf[2*KNAMELEN];
 
+	up->nerrlab = 0;
 
+	print("Starting init0()\n");
+	spllo();
+	if(waserror())
+		panic("init0 %r");
+
+	/* These are o.k. because rootinit is null.
+	 * Then early kproc's will have a root and dot. */
+	o = up->env;
+	o->pgrp->slash = namec("#/", Atodir, 0, 0);
+	cnameclose(o->pgrp->slash->name);
+	o->pgrp->slash->name = newcname("/");
+	o->pgrp->dot = cclone(o->pgrp->slash);
+	chandevinit();
+	if(!waserror()){
+		ksetenv("cputype", "arm", 0);
+		snprint(buf, sizeof(buf), "arm %s", conffile);
+		ksetenv("terminal", buf, 0);
+		//snprint(buf, sizeof(buf), "%s", getethermac()); TODO
+		ksetenv("ethermac", buf, 0);
+		poperror();
+	}
+	poperror();
+	disinit("/osinit.dis");
+}
+void
+userinit(void)
+{
+	Proc *p;
+	Osenv *o;
+
+	p = newproc();
+	o = p->env;
+
+	o->fgrp = newfgrp(nil);
+	o->pgrp = newpgrp();
+	o->egrp = newegrp();
+	kstrdup(&o->user, eve);
+
+	strcpy(p->text, "interp");
+
+	p->fpstate = FPINIT;
+
+	/*	Kernel Stack
+		N.B. The -12 for the stack pointer is important.
+		4 bytes for gotolabel's return PC */
+	p->sched.pc = (ulong)init0;
+	p->sched.sp = (ulong)p->kstack+KSTACK-8;
+
+	ready(p);
+}
 
 Proc *up = 0;
 
 #include "../port/uart.h"
 PhysUart* physuart[1];
-int		waserror(void) { return 0; }
+//int		waserror(void) { return 0; }
 //int		splhi(void) { return 0; }
 //void	splx(int) { return; }
 //int		spllo(void) { return 0; } 
@@ -117,12 +176,12 @@ int		waserror(void) { return 0; }
 //ulong	getcallerpc(void*) { return 0; }
 int		segflush(void*, ulong) { return 0; }
 void	idlehands(void) { return; }
-void 	kprocchild(Proc *p, void (*func)(void*), void *arg) { return; }
+//void 	kprocchild(Proc *p, void (*func)(void*), void *arg) { return; }
 //ulong	_tas(ulong*) { return 0; }
-ulong	_div(ulong*) { return 0; }
-ulong	_divu(ulong*) { return 0; }
-ulong	_mod(ulong*) { return 0; }
-ulong	_modu(ulong*) { return 0; }
+//ulong	_div(ulong*) { return 0; }
+//ulong	_divu(ulong*) { return 0; }
+//ulong	_mod(ulong*) { return 0; }
+//ulong	_modu(ulong*) { return 0; }
 
 void	setpanic(void) { return; }
 void	dumpstack(void) { return; }

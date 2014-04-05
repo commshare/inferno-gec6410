@@ -95,7 +95,6 @@ void serial_addr(void *addr, int type)
 
 void
 serial_putsi(char *s, int n) {
-	serial_puts("??\n");
 	while(*s != 0 && n-- >=0) {
 		if (*s == '\n')
 			serial_putc('\r');
