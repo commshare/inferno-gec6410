@@ -25,15 +25,7 @@ port
 	allocb
 	chan
 	dev
-	dial
-	dis
-	discall
-	exception
-	exportfs
-	inferno
-	latin1
-	nocache
-	nodynld
+	dial dis discall exception exportfs inferno latin1 nocache nodynld
 	parse
 	pgrp
 	print
@@ -56,8 +48,9 @@ code
 	int redirectconsole = 1;
 	char debug_keys = 1;
 	int panicreset = 0;
-init
-	rpiinit
+
+init 
+	bootinit
 
 root
 	/chan	/
@@ -69,4 +62,3 @@ root
 	/prog	/
 	/dis/lib
 	/dis/disk
-	/osinit.dis

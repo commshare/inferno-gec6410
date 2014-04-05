@@ -93,12 +93,12 @@ main() {
 	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
 	//disinit("/osinit.dis"); the dis init will lead to a non-response
 	//printinit();
-	procinit();
-	links();
-	chandevreset();
-	eve = strdup("inferno");
-	userinit();
-	schedinit();
+	//procinit();
+	//links();
+	//chandevreset();
+	//eve = strdup("inferno");
+	//userinit();
+	//schedinit();
 	serial_puts("Infinite Loop\n");
 	while (1);
 }
@@ -132,7 +132,7 @@ init0(void)
 		poperror();
 	}
 	poperror();
-	disinit("/osinit.dis");
+	//disinit("/osinit.dis");
 }
 void
 userinit(void)
