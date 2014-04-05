@@ -14,6 +14,7 @@ INSTALLDIR=$ROOT/Inferno/$OBJTYPE/bin
 
 OBJ=\
 	load.$O\
+	archrpi.$O\
 	main.$O\
 	armv6.$O\
 	serial.$O\
@@ -46,7 +47,9 @@ MODIFY=./modify.sh
 i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD -l -o $target -R4 -T$loadaddr $OBJ $CONF.$O $LIBFILES
-	$MODIFY i$CONF
+	$MODIFY	i$CONF
+	
+	
 
 <../port/portmkfile
 

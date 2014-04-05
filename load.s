@@ -7,7 +7,7 @@ TEXT _start(SB), 1, $-4
 	ADD		$PHYSDRAM, R12
 	MOVW	$0, R0
 	
-	MOVW    $(KTZERO/*-BY2PG*/),SP
+	MOVW    $(KTZERO/*-BY2PG*/),SP	/*setting stack*/
 	BL		,serial_checkpoint(SB)
 
 	MOVW    $(PsrDirq|PsrDfiq|PsrMsvc), R1  /* SVC mode: interrupts disabled */
@@ -54,7 +54,7 @@ _ramZ:
 	MOVW    $1, R1
 	MCR     CpSC, 0, R1, C(CpSPM), C(CpSPMperf), CpSPMctl /* counter */
 	MRC     CpSC, 0, R0, C(CpCONTROL), C(0), CpMainctl
-	ORR     $(CpChv|CpCdcache|CpCicache|CpCmmu), R0
+	ORR     $(CpChv|CpCdcache|CpCicache/*|CpCmmu*/), R0
 	MCR     CpSC, 0, R0, C(CpCONTROL), C(0), CpMainctl
 	ISB
 
