@@ -27,8 +27,8 @@
 #define BUSDRAM		0x50000000
 #define	DRAMSIZE	(256*MiB)
 
-#define	PHYSIO		0x20000000
-#define VIRTIO		0x20000000
-#define	BUSIO		0x7E000000
-#define	IOSIZE		(16*MiB)
+#define	PHYSIO		0x70000000
+#define VIRTIO		0x70000000
+#define	BUSIO		0x70000000
+#define	IOSIZE		(256*MiB)
 #define	FRAMEBUFFER	0xA0000000
