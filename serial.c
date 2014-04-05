@@ -1,4 +1,12 @@
 #include "./serial.h"
+#include "./u.h"
+#include "../port/lib.h"
+#include "dat.h"
+#include "fns.h"
+#include "mem.h"
+#include "armv6.h"
+#include "s3c6410.h"
+
 
 static inline S3C64XX_UART * S3C64XX_GetBase_UART(S3C64XX_UARTS_NR nr)
 {
@@ -101,5 +109,32 @@ serial_putsi(char *s, int n) {
 			serial_putc('\r');
 		serial_putc(*s++);
 	}
+}
+
+void serial_checkpoint(void){
+	serial_puts("****************check point ");
+	serial_puts("Now, PC: ");
+	serial_addr((void *)getpc(), 1);
+}
+
+void dump_mem(ulong *addr,ulong length){
+	int i;
+	serial_puts("DUMP MEMORY FROM ");
+	serial_addr( (void *) addr,0);
+	serial_puts("TO ");
+	serial_addr( (void *)( ((char *)addr)+length ),1);
+	for(i=0;i<(length>>2);i++){
+		serial_addr( (void*) addr,0);
+		serial_addr( (void*) *addr,1);
+		addr++;
+	}
+}
+
+void print_TTB(void){
+	
+	serial_puts("TTB is ");
+	serial_addr( (void*)getTTB(),1);
+	dump_mem((ulong *)getTTB(),16);
+	dump_mem((ulong *)(getTTB()-0x50000000),16);
 }
 
