@@ -133,7 +133,6 @@ void print_TTB(void){
 	
 	serial_puts("TTB is ");
 	serial_addr( (void*)getTTB(),1);
-	dump_mem((ulong *)getTTB(),16);
-	dump_mem((ulong *)(getTTB()-0x50000000),16);
+	dump_mem((ulong *)getTTB(),1024);
 }
 
