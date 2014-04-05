@@ -17,6 +17,7 @@ OBJ=\
 	main.$O\
 	armv6.$O\
 	serial.$O\
+	debug.$O\
 	mmu.$O\
 	$IP\
 	$DEVS\
