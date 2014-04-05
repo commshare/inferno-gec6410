@@ -2,7 +2,7 @@
 
 CONF=s3c
 CONFLIST=s3c
-loadaddr=0x50008000
+loadaddr=0x50018000
 
 SYSTARG=$OSTARG
 OBJTYPE=arm

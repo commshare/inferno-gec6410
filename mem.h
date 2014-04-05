@@ -11,7 +11,7 @@
 #define	VCBUFFER	(KZERO+0x3400)		/* videocore mailbox buffer */
 #define	FIQSTKTOP	(KZERO+0x4000)		/* FIQ stack */
 #define	L1		(KZERO+0x4000)		/* tt ptes: 16KiB aligned */
-#define	KTZERO		(KZERO+0x8000)		/* kernel text start */
+#define	KTZERO		(KZERO+0x18000)		/* kernel text start */
 #define ROUND(s,sz)	(((s)+(sz-1))&~(sz-1))
 #define PGROUND(s)	ROUND(s, BY2PG)
 
