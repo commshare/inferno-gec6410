@@ -41,9 +41,11 @@ KERNDATE=`{$NDATE}
 
 default:V: i$CONF
 
+MODIFY=./modify.sh
 i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
 	$LD -l -o $target -R4 -T$loadaddr $OBJ $CONF.$O $LIBFILES
+	$MODIFY i$CONF
 
 <../port/portmkfile
 
