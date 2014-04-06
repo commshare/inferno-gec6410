@@ -87,12 +87,17 @@ main() {
 	serwrite = &serial_putsi;  //Remember to delete the _div ... in this file
 	//disinit("/osinit.dis"); the dis init here will lead to a painc:error(out of memory: main) not in a process
 	confinit();
+	mmuinit1();
 	xinit();
 	poolinit();
 	poolsizeinit();
 	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
 	//disinit("/osinit.dis"); the dis init will lead to a non-response
 	//printinit();
+	trapinit();
+	print("trying undefined instruction\n");
+	try_undefined();
+	print("Interruption init\n");
 	procinit();
 	links();
 	chandevreset();
@@ -183,8 +188,8 @@ void	idlehands(void) { return; }
 //ulong	_mod(ulong*) { return 0; }
 //ulong	_modu(ulong*) { return 0; }
 
-void	setpanic(void) { return; }
-void	dumpstack(void) { return; }
+//void	setpanic(void) { return; }
+//void	dumpstack(void) { return; }
 void	exit(int) { return; }
 void	reboot(void) { return; }
 void	halt(void) { return; }

@@ -19,7 +19,10 @@ OBJ=\
 	armv6.$O\
 	serial.$O\
 	debug.$O\
+	dump.$O\
 	mmu.$O\
+	trap.$O\
+	intr.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\
