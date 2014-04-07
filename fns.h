@@ -4,6 +4,8 @@
 //#define	coherence()		/* nothing needed for uniprocessor */
 #define procsave(p)
 #define waserror()	(up->nerrlab++, setlabel(&up->errlab[up->nerrlab-1]))
+#define kmapinval()
+#define HOWMANY(x, y)	(((x)+((y)-1))/(y))
 //int		waserror(void);
 void    (*screenputs)(char*, int);
 void	(*serwrite)(char*, int);

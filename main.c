@@ -6,6 +6,7 @@
 #include "mem.h"
 #include "armv6.h"
 #include "s3c6410.h"
+#include "version.h"
 Mach *m = (Mach*)MACHADDR;
 extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
@@ -85,16 +86,17 @@ main() {
 	serial_addr((char *)&etext, 1);
 	conf.nmach = 1;
 	serwrite = &serial_putsi;  //Remember to delete the _div ... in this file
-	//disinit("/osinit.dis"); the dis init here will lead to a painc:error(out of memory: main) not in a process
 	confinit();
 	mmuinit1();
 	xinit();
 	poolinit();
 	poolsizeinit();
-	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
-	//disinit("/osinit.dis"); the dis init will lead to a non-response
-	//printinit();
 	trapinit();
+	timersinit();
+	clockinit();
+	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
+	print("Inferno OS %s Vita Nuova\n", VERSION);
+	print("Ported to GEC-6410 by lab414 at USTC\n");
 	print("trying undefined instruction\n");
 	try_undefined();
 	print("Interruption init\n");
@@ -194,8 +196,8 @@ void	exit(int) { return; }
 void	reboot(void) { return; }
 void	halt(void) { return; }
 
-Timer*	addclock0link(void (*)(void), int) { return 0; }
-void	clockcheck(void) { return; }
+//Timer*	addclock0link(void (*)(void), int) { return 0; }
+//void	clockcheck(void) { return; }
 
 void	fpinit(void) {}
 void	FPsave(void*) {}

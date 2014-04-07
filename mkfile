@@ -18,6 +18,7 @@ OBJ=\
 	main.$O\
 	armv6.$O\
 	serial.$O\
+	clock.$O\
 	debug.$O\
 	dump.$O\
 	mmu.$O\
