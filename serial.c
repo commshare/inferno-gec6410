@@ -10,26 +10,26 @@
 
 static inline S3C64XX_UART * S3C64XX_GetBase_UART(S3C64XX_UARTS_NR nr)
 {
-	return (S3C64XX_UART *)(ELFIN_UART_BASE + (nr*0x400));
+	return (S3C64XX_UART *)(ELFIN_UART_BASE + (nr*0x400));			//offset 0x400
 }
-void serial_setbrg(void)
+/*void serial_setbrg(void)
 {
 //	DECLARE_GLOBAL_DATA_PTR;
 	S3C64XX_UART *	uart0;
 	uart0=S3C64XX_GetBase_UART(UART_NR);
-	uart0->UBRDIV=20;
+	uart0->UBRDIV=20;							
 	uart0->UDIVSLOT=0xddd5;
 
 	int i;
 	for (i = 0; i < 100; i++);
 }
-
+*/
 /*
  * Initialise the serial port with the given baudrate. The settings
  * are always 8 data bits, no parity, 1 stop bit, no start bits.
  *
  */
-int serial_init(void)
+int serial_init(void)				//not used because of uboot
 {
 	serial_setbrg();
 	S3C64XX_UART *	uart0;
@@ -109,7 +109,7 @@ serial_putsi(char *s, int n) {
 		serial_putc(*s++);
 	}
 }
-
+/****************************debug function***************************/
 void serial_checkpoint(void){
 	serial_puts("****************check point ");
 	serial_puts("Now, PC: ");

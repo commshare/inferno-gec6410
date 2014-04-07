@@ -2,7 +2,7 @@
 #define MiB		1048576u	/*! Mebi 0x0000000000100000 */
 #define GiB		1073741824u	/*! Gibi 000000000040000000 */
 
-#define KZERO		0x50000000			/*! kernel address space */
+#define KZERO		0x50000000		/*! kernel address space */
 #define BY2PG		(4*KiB)			/*! bytes per page */
 #define BI2BY		8			/*! bits per byte */
 #define BY2V		8			/*! only used in xalloc.c */

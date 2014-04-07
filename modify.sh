@@ -1,4 +1,5 @@
 #!/bin/sh
+#use to cut off the header(used to define a executable profile) and make up the end(when size is even).
 size=`stat -c "%s" $1`
 outfile=skip
 

@@ -1,7 +1,7 @@
 #define UART_NR	S3C64XX_UART0
-#define ELFIN_UART_BASE		0x7F005000
+#define ELFIN_UART_BASE		0x7F005000	//Address of serials structure.
 
-typedef volatile unsigned long	vu_long;
+typedef volatile unsigned long	vu_long;	
 typedef volatile unsigned short vu_short;
 typedef volatile unsigned char	vu_char;
 typedef unsigned long	ulong;
@@ -10,7 +10,7 @@ typedef unsigned char	uchar;
 typedef vu_char		S3C64XX_REG8;
 typedef vu_short	S3C64XX_REG16;
 typedef vu_long		S3C64XX_REG32;
-typedef struct {
+typedef struct {				
 	S3C64XX_REG32	ULCON;
 	S3C64XX_REG32	UCON;
 	S3C64XX_REG32	UFCON;
@@ -20,9 +20,9 @@ typedef struct {
 	S3C64XX_REG32	UFSTAT;
 	S3C64XX_REG32	UMSTAT;
 
-	S3C64XX_REG8	UTXH;
+	S3C64XX_REG8	UTXH;		//transmit
 	S3C64XX_REG8	res1[3];
-	S3C64XX_REG8	URXH;
+	S3C64XX_REG8	URXH;		//receive
 	S3C64XX_REG8	res2[3];
 
 	S3C64XX_REG32	UBRDIV;
