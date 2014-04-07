@@ -29,6 +29,7 @@ static inline S3C64XX_UART * S3C64XX_GetBase_UART(S3C64XX_UARTS_NR nr)
  * are always 8 data bits, no parity, 1 stop bit, no start bits.
  *
  */
+ /*
 int serial_init(void)				//not used because of uboot
 {
 	serial_setbrg();
@@ -39,6 +40,7 @@ int serial_init(void)				//not used because of uboot
 
 	return (0);
 }
+*/
 
 /*
  * Read a single byte from the serial port. Returns 1 on success, 0
