@@ -271,7 +271,7 @@ trap(Ureg *ureg)
 		break;
 
 	case PsrMund:
-	/**TODO:UNDEFINED INSTRUCTION
+	
 		if(*(ulong*)ureg->pc == BREAK && breakhandler) {
 			int s;
 			Proc *p;
@@ -283,15 +283,15 @@ trap(Ureg *ureg)
 				sched();
 			} else if(s == BrkNoSched) {
 				/* stop it being preempted until next instruction */
-		/*		p->preempted = 1;
+				p->preempted = 1;
 				if(up)
 					up->dbgreg = 0;
 				return;
 			}
 			break;
 		}
-	*/
-		print("Undefined Instruction %uX\n",*(ulong*)ureg->pc);
+	
+//		print("Undefined Instruction %uX\n",*(ulong*)ureg->pc);
 		if(up == nil) goto faultpanic;
 		spllo();
 		if(waserror()) {
@@ -301,12 +301,12 @@ trap(Ureg *ureg)
 			dumpregs(ureg);
 			panic("%s", up->env->errstr);
 		}
-	/*
+	
 		if(!fpiarm(ureg)) {
 			dumpregs(ureg);
 			sys_trap_error(ureg->type);
 		}
-	*/
+	
 		poperror();
 		break;
 
@@ -336,7 +336,7 @@ trap(Ureg *ureg)
 	default:
 faultpanic:
 		print("enter faultpanic\n");
-//		setpanic();
+		setpanic();
 		dumpregs(ureg);
 	print("Infinite loop for debug\n");
 	for(;;);

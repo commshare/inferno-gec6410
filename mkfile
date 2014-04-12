@@ -24,6 +24,9 @@ OBJ=\
 	mmu.$O\
 	trap.$O\
 	intr.$O\
+	fpi.$O\
+	fpiarm.$O\
+	fpimem.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\
@@ -37,10 +40,16 @@ LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
 
 HFILES=\
+	armv6.h\
 	mem.h\
 	dat.h\
 	fns.h\
 	io.h\
+	fpi.h\
+	serial.h\
+	include/u.h\
+	include/ureg.h\
+	include/lib9.h\
 
 CFLAGS=-wFV -I./include/ -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp
 KERNDATE=`{$NDATE}
@@ -50,7 +59,7 @@ default:V: i$CONF
 MODIFY=./modify.sh
 i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 	$CC $CFLAGS -DKERNDATE=$KERNDATE $CONF.c
-	$LD -l -o $target -R4 -T$loadaddr $OBJ $CONF.$O $LIBFILES
+	$LD -f -l -o $target -R4 -T$loadaddr $OBJ $CONF.$O $LIBFILES
 	$MODIFY	i$CONF
 	
 	

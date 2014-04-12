@@ -92,14 +92,15 @@ main() {
 	poolinit();
 	poolsizeinit();
 	trapinit();
+	print("Interruption init\n");
 	timersinit();
 	clockinit();
 	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
 	print("Inferno OS %s Vita Nuova\n", VERSION);
 	print("Ported to GEC-6410 by lab414 at USTC\n");
-	print("trying undefined instruction\n");
+//	print("trying undefined instruction\n");
 //	try_undefined();
-	print("Interruption init\n");
+//	print("Floating test: %f*%f=%f\n",0.15,2.35,0.15*2.35);
 	procinit();
 	links();
 	chandevreset();
