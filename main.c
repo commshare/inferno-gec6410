@@ -97,8 +97,9 @@ main() {
 	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
 	print("Inferno OS %s Vita Nuova\n", VERSION);
 	print("Ported to GEC-6410 by lab414 at USTC\n");
-	print("trying undefined instruction\n");
+//	print("trying undefined instruction\n");
 //	try_undefined();
+	print("Floating test: %lf*%lf=%lf\n",0.15,2.35,0.15*2.35);
 	print("Interruption init\n");
 	procinit();
 	links();
