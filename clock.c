@@ -129,7 +129,7 @@ clockinit(void)
 	}while(tm->tcnto > 900000); //1s
 	t1 -= t0;
 	m->cpuhz = t1; //then we got the freq of cpu
-	tm->tcntb = 0xffffffff; //initial the tcntb of timer4 to be 0xffffffff
+	tm->tcntb = 5000000; //initial the tcntb of timer4 to be 0xffffffff
 	cfg->tcon = 0xB0000; //reinit
 	cfg->tcon = 0x90000;
 	tm->tcmpb = tm->tcnto + 1;

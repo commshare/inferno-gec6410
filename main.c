@@ -98,14 +98,16 @@ main() {
 	print("Inferno OS %s Vita Nuova\n", VERSION);
 	print("Ported to GEC-6410 by lab414 at USTC\n");
 	print("trying undefined instruction\n");
-	try_undefined();
+//	try_undefined();
 	print("Interruption init\n");
+	/*
 	procinit();
 	links();
 	chandevreset();
 	eve = strdup("inferno");
 	userinit();
 	schedinit();
+	*/
 	serial_puts("Infinite Loop\n");
 	while (1);
 }

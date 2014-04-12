@@ -42,7 +42,7 @@ HFILES=\
 	fns.h\
 	io.h\
 
-CFLAGS=-wFV -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp
+CFLAGS=-wFV -I./include/ -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp
 KERNDATE=`{$NDATE}
 
 default:V: i$CONF

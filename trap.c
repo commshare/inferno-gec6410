@@ -230,11 +230,11 @@ void
 trap(Ureg *ureg)
 {
 	int rem, itype, t;
-
+/*
 	print("Trap type: %uX \n",ureg->type);
 	print("Mach stack address:%uX \n",(ulong)m->stack);
 	print("Ureg address:	  %uX \n",(ulong)ureg);
-	
+*/
 	if(up != nil)
 		rem = ((char*)ureg)-up->kstack;
 	else rem = ((char*)ureg)-(char*)m->stack;
@@ -336,11 +336,15 @@ trap(Ureg *ureg)
 	default:
 faultpanic:
 		print("enter faultpanic\n");
-		setpanic();
+//		setpanic();
 		dumpregs(ureg);
+	print("Infinite loop for debug\n");
+	for(;;);
 		panic("exception %uX %s\n", ureg->type, trapname(ureg->type));
 		break;
 	}
+	
+
 
 	splhi();
 	if(up)
