@@ -59,3 +59,5 @@ i$CONF: $OBJ $CONF.c $CONF.root.h $LIBNAMES
 
 main.$O:	$ROOT/Inferno/$OBJTYPE/include/ureg.h
 
+rpiinit.dis:  ../init/rpiinit.b
+		cd ../init; mk rpiinit.dis

@@ -7,30 +7,31 @@
 #include "armv6.h"
 #include "s3c6410.h"
 
+static void serial_clock(void);
+extern Queue*  kbdq;
 
 static inline S3C64XX_UART * S3C64XX_GetBase_UART(S3C64XX_UARTS_NR nr)
 {
-	return (S3C64XX_UART *)(ELFIN_UART_BASE + (nr*0x400));			//offset 0x400
+	return (S3C64XX_UART *)(ELFIN_UART_BASE + (nr*0x400));
 }
-/*void serial_setbrg(void)
+void serial_setbrg(void)
 {
 //	DECLARE_GLOBAL_DATA_PTR;
 	S3C64XX_UART *	uart0;
 	uart0=S3C64XX_GetBase_UART(UART_NR);
-	uart0->UBRDIV=20;							
+	uart0->UBRDIV=20;
 	uart0->UDIVSLOT=0xddd5;
 
 	int i;
 	for (i = 0; i < 100; i++);
 }
-*/
+
 /*
  * Initialise the serial port with the given baudrate. The settings
  * are always 8 data bits, no parity, 1 stop bit, no start bits.
  *
  */
- /*
-int serial_init(void)				//not used because of uboot
+int serial_init(void)
 {
 	serial_setbrg();
 	S3C64XX_UART *	uart0;
@@ -40,7 +41,6 @@ int serial_init(void)				//not used because of uboot
 
 	return (0);
 }
-*/
 
 /*
  * Read a single byte from the serial port. Returns 1 on success, 0
@@ -111,7 +111,36 @@ serial_putsi(char *s, int n) {
 		serial_putc(*s++);
 	}
 }
-/****************************debug function***************************/
+
+void
+serialinit(void)
+{
+	if(kbdq == nil)
+		kbdq = qopen(4*1024, 0, 0, 0);
+	addclock0link(serial_clock, 22);
+}
+
+static void
+serial_clock(void)
+{
+	char c;
+	int i;
+	if (serial_tstc())
+	{
+		c = serial_getc();
+		if (c == 13)
+		{
+			serial_putc('\r');
+			serial_putc('\n');
+			kbdputc(kbdq, '\r');
+			kbdputc(kbdq, '\n');
+			return;
+		}
+		serial_putc(c);
+		kbdputc(kbdq, c);
+	}
+}
+
 void serial_checkpoint(void){
 	serial_puts("****************check point ");
 	serial_puts("Now, PC: ");
@@ -137,4 +166,3 @@ void print_TTB(void){
 	serial_addr( (void*)getTTB(),1);
 	dump_mem((ulong *)getTTB(),1024);
 }
-

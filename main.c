@@ -100,14 +100,12 @@ main() {
 	print("trying undefined instruction\n");
 //	try_undefined();
 	print("Interruption init\n");
-	/*
 	procinit();
 	links();
 	chandevreset();
 	eve = strdup("inferno");
 	userinit();
 	schedinit();
-	*/
 	serial_puts("Infinite Loop\n");
 	while (1);
 }

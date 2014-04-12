@@ -56,7 +56,7 @@ init
 root
 	/chan	/
 	/dev	/
-	/dis	/
+	/dis	
 	/env	/
 	/fd		/
 	/net	/
@@ -64,3 +64,18 @@ root
 	/dis/lib
 	/dis/disk
 	/osinit.dis
+	/dis/sh.dis	/dis/tiny/sh.dis
+	/dis/ls.dis
+	/dis/cat.dis
+	/dis/bind.dis
+	/dis/mount.dis
+	/dis/pwd.dis
+	/dis/echo.dis
+	/dis/cd.dis
+	/dis/lib/arg.dis
+	/dis/lib/bufio.dis
+	/dis/lib/string.dis
+	/dis/lib/filepat.dis
+	/dis/lib/readdir.dis
+	/dis/lib/workdir.dis
+	/dis/lib/daytime.dis
