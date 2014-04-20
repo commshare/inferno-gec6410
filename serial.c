@@ -111,18 +111,39 @@ serial_putsi(char *s, int n) {
 		serial_putc(*s++);
 	}
 }
-
+void
+serial_putsiy(char *s, int n)
+{
+	int i;
+	Rune r;
+	char buf[4];
+	while(n > 0){
+		i = chartorune(&r, s);
+		if(i == 0){
+			s++;
+			--n;
+			continue;
+		}
+		memmove(buf, s, i);
+		buf[i] = 0;
+		n -= i;
+		s += i;
+		serial_putc(buf[0]);
+	}
+}
 void
 serialinit(void)
 {
-	if(kbdq == nil)
-		kbdq = qopen(4*1024, 0, 0, 0);
+	serial_puts("serial init\n");
+	kbdq = qopen(4*1024, 0, 0, 0);
+	qnoblock(kbdq, 0);
 	addclock0link(serial_clock, 22);
 }
 
 static void
 serial_clock(void)
 {
+	//serial_puts("well, check\n");
 	char c;
 	int i;
 	if (serial_tstc())
@@ -139,6 +160,7 @@ serial_clock(void)
 		serial_putc(c);
 		kbdputc(kbdq, c);
 	}
+	//else print("no\n");
 }
 
 void serial_checkpoint(void){
