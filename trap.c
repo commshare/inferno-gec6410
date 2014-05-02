@@ -258,7 +258,7 @@ trap(Ureg *ureg)
 		up->pc = ureg->pc;
 		up->dbgreg = ureg;
 	}
-	print("enter switch\n");
+	//print("enter switch\n");
 	
 	switch(itype) {
 	case PsrMirq:

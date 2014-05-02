@@ -86,7 +86,7 @@ main() {
 	serial_addr((char *)&etext, 1);
 	conf.nmach = 1;
 	//screenputs = serial_putsiy;
-	serwrite = &serial_putsiy;  //Remember to delete the _div ... in this file
+	serwrite = &serial_putsi;  //Remember to delete the _div ... in this file
 	confinit();
 	mmuinit1();
 	xinit();
@@ -95,6 +95,7 @@ main() {
 	trapinit();
 	timersinit();
 	clockinit();
+	printinit();
 	serialinit();
 	print("\nARM %ld MHz id %8.8lux\n", (m->cpuhz+500000)/1000000, getcpuid());
 	print("Inferno OS %s Vita Nuova\n", VERSION);
