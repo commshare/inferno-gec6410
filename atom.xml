@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Inferno-os on gec6410]]></title>
+  <link href="http://jh-yu.github.io/atom.xml" rel="self"/>
+  <link href="http://jh-yu.github.io/"/>
+  <updated>2014-04-07T20:26:23+08:00</updated>
+  <id>http://jh-yu.github.io/</id>
+  <author>
+    <name><![CDATA[Jiahui Yu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Intro: A port of Inferno-os on gec6410]]></title>
+    <link href="http://jh-yu.github.io/blog/2014/04/05/intro-a-port-of-inferno-os-on-gec6410/"/>
+    <updated>2014-04-05T13:38:55+08:00</updated>
+    <id>http://jh-yu.github.io/blog/2014/04/05/intro-a-port-of-inferno-os-on-gec6410</id>
+    <content type="html"><![CDATA[<h2>Here are some tutorials of porting inferno-os, we hope these tutorials can help you.</h2>
+
+<p>Inferno-os is a distributed operating system, originally developed at Bell labs.Applications written in Inferno&rsquo;s concurrent programming language, Limbo, are compiled to its portable virtual machine code (Dis), to run anywhere on a network in the portable environment that Inferno provides. Unusually, that environment looks and acts like a complete operating system.</p>
+
+<p>During the time when we port it on ARM-gec6410, the port on Raspberry Pi helped us a lot. View it on <a href="http://lynxline.com/projects/labs-portintg-inferno-os-to-raspberry-pi/">Labs: Porting Inferno OS to Raspberry Pi</a>.</p>
+
+<p>As LYNXLINE has been given the way following with you can have a clear clue to port inferno-os on any board based on arm, here we just show some differences between the gec6410 and raspberry-pi.</p>
+]]></content>
+  </entry>
+  
+</feed>
