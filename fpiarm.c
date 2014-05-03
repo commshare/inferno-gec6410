@@ -471,7 +471,7 @@ fpiarm(Ureg *ur)
 	for(n=0;;n++){
 		op = getulong(ur->pc);
 		o = (op>>24) & 0xF;
-		if(((op>>8) & 0xF) != 1 || o != 0xE && (o&~1) != 0xC)
+		if(((op>>8) & 0xF) != 11 || o != 0xE && (o&~1) != 0xC)
 			break;
 		if(condok(ur->psr, op>>28))
 			fpemu(ur->pc, op, ur, ufp);
