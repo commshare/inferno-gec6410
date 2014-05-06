@@ -10,5 +10,4 @@ The inferno-os source codes are on https://code.google.com/p/inferno-os/
 Inferno-os is a distributed operating system, originally developed at Bell labs.Applications written in Inferno's concurrent programming language, Limbo, are compiled to its portable virtual machine code (Dis), to run anywhere on a network in the portable environment that Inferno provides. Unusually, that environment looks and acts like a complete operating system. 
 
 
-Feel free to contact me at yjh199511@gmail.com or my workmates(By the way, we are all undergraduates. -- )
-
+Feel free to contact me at yjh199511@gmail.com or my workmates.
