@@ -12,6 +12,11 @@ dev
 lib
 	interp
 	math
+	memlayer
+	memdraw
+	keyring
+	mp
+	kern
 	kern
 	sec
 
@@ -25,7 +30,16 @@ port
 	allocb
 	chan
 	dev
-	dial dis discall exception exportfs inferno latin1 mul64fract nocache nodynld
+	dial
+	dis
+	discall
+	exception
+	exportfs
+	inferno
+	latin1
+	mul64fract
+	nocache
+	nodynld
 	parse
 	pgrp
 	print
@@ -56,24 +70,34 @@ init
 root
 	/chan	/
 	/dev	/
-	/dis	
+	/dis
+	/lib	/
 	/env	/
-	/fd		/
+	/fd	/
 	/net	/
 	/prog	/
+	/n	/
+	/n/local	/
 	/dis/lib
 	/dis/disk
 	/osinit.dis
-	/dis/sh.dis	/dis/tiny/sh.dis
+	/dis/sh.dis
 	/dis/ls.dis
+	/dis/ps.dis
 	/dis/cat.dis
 	/dis/bind.dis
 	/dis/mount.dis
+	/dis/unmount.dis
 	/dis/pwd.dis
 	/dis/echo.dis
 	/dis/cd.dis
 	/dis/lib/arg.dis
+	/dis/lib/auth.dis
+	/dis/lib/lock.dis
+	/dis/lib/rand.dis
+	/dis/lib/dial.dis
 	/dis/lib/bufio.dis
+	/dis/lib/timers.dis
 	/dis/lib/string.dis
 	/dis/lib/filepat.dis
 	/dis/lib/readdir.dis

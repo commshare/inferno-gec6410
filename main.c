@@ -12,12 +12,18 @@ extern int main_pool_pcnt;
 extern int heap_pool_pcnt;
 extern int image_pool_pcnt;
 Conf conf;
+Proc *up = 0;
+
+#include "../port/uart.h"
+PhysUart* physuart[1];
+/*
 static void
 poolsizeinit(void)
 {
 	ulong nb;
 	nb = conf.npage*BY2PG;
 	serial_puts("conf.npage : ");
+	print("%dxxxxxx\n", 456 / 100);
 	serial_addr((void *)conf.npage, 1);
 	serial_puts("nb : ");
 	serial_addr((void *)nb, 1);
@@ -30,6 +36,16 @@ poolsizeinit(void)
 	poolsize(imagmem, (nb >> 3) * 3, 1);
 	serial_puts("imagemem, size:\n");
 	serial_addr((void *)((nb >> 3) * 3), 1);
+}
+*/
+static void
+poolsizeinit(void)
+{
+	ulong nb;
+	nb = conf.npage*BY2PG;
+	poolsize(mainmem, (nb*main_pool_pcnt)/100, 0);
+	poolsize(heapmem, (nb*heap_pool_pcnt)/100, 0);
+	poolsize(imagmem, (nb*image_pool_pcnt)/100, 1);
 }
 void
 confinit(void)
@@ -63,7 +79,7 @@ confinit(void)
 }
 void 
 main() {
-	//uint rev; Not Now
+	uint rev;
 	serial_puts("Now, PC: ");
 	serial_addr((void *)getpc(), 0);
 	serial_puts("SP: ");
@@ -85,8 +101,8 @@ main() {
 	serial_addr((char *)&end, 1);
 	serial_addr((char *)&etext, 1);
 	conf.nmach = 1;
-	//screenputs = serial_putsiy;
-	serwrite = &serial_putsi;  //Remember to delete the _div ... in this file
+	screenputs = &serial_putsiy;
+	//serwrite = &serial_putsi;  //Remember to delete the _div ... in this file
 	confinit();
 	mmuinit1();
 	xinit();
@@ -168,11 +184,8 @@ userinit(void)
 	ready(p);
 }
 
-Proc *up = 0;
 
-#include "../port/uart.h"
-PhysUart* physuart[1];
-int		segflush(void*, ulong) { return 0; }
+void	segflush(void*, ulong) { return; }
 void	idlehands(void) { return; }
 
 void	exit(int) { return; }
