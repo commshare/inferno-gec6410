@@ -157,6 +157,12 @@ serial_clock(void)
 			kbdputc(kbdq, '\n');
 			return;
 		}
+		else if (c == 127)
+		{
+			serial_putc(c);
+			kbdputc(kbdq, 8);
+			return;
+		}
 		serial_putc(c);
 		kbdputc(kbdq, c);
 	}
