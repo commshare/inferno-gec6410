@@ -4,6 +4,8 @@
 #include "dat.h"
 #include "fns.h"
 
+#include "../port/netif.h"
+#include "etherif.h"
 
 static void
 linkproc(void)
@@ -26,5 +28,31 @@ kprocchild(Proc *p, void (*func)(void*), void *arg)
 
 void		
 validaddr(void*, ulong, int) {}
+
+int
+archether(unsigned ctlrno, Ether *ether)
+{
+    switch(ctlrno) {
+    case 0:
+        ether->type = "unknown";
+        ether->ctlrno = ctlrno;
+        ether->irq = -1;
+        ether->nopt = 0;
+        ether->mbps = 100;
+        return 1;
+    }
+    return -1;
+}
+
+/*
+ * stub for ../omap/devether.c
+ */
+int
+isaconfig(char *class, int ctlrno, ISAConf *isa)
+{
+    USED(ctlrno);
+    USED(isa);
+    return strcmp(class, "ether") == 0;
+}
 
 
