@@ -282,7 +282,7 @@ void
 ethers3clink(void)
 {
 	ulong *id;
-	id = ulong *(DM9000_IOBASE+DM9000_VIDL);
+	id = (ulong *)(DM9000_IOBASE+DM9000_VIDL);
 	print("DM9000 ID:%lux",*id);
 	addethercard("DM9000", ethers3cinit);
 }
