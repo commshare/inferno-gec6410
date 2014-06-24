@@ -32,6 +32,13 @@ mmuinit(void)
 
 	/* identity map first MB of ram so mmu can be enabled */
 	l1[L1X(PHYSDRAM)] = PHYSDRAM|Dom0|L1AP(Krw)|Section|Cached|Buffered;
+	
+	/* map dm9000 AEP */
+	va = DM9000_BASE;
+	for(pa = DM9000_BASE; pa < DM9000_BASE+DM9000_SIZE; pa += MiB){
+		l1[L1X(va)] = pa|Dom0|L1AP(Krw)|Section;
+		va += MiB;
+	}
 
 	/* map i/o registers */
 	va = VIRTIO;

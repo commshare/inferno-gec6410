@@ -14,6 +14,9 @@
 #include "etherif.h"
 #include "../ip/ip.h"
 
+#include "dm9000.h"
+
+
 #define	GET4(p)		((p)[3]<<24 | (p)[2]<<16 | (p)[1]<<8  | (p)[0])
 #define	PUT4(p, v)	((p)[0] = (v), (p)[1] = (v)>>8, \
 			 (p)[2] = (v)>>16, (p)[3] = (v)>>24)
@@ -21,6 +24,8 @@
 #define ddump	if(0) dump
 
 static int debug = 0;
+
+typedef struct Ether Ether;
 
 enum {
 	Bind	= 0,
@@ -31,15 +36,20 @@ enum {
 	SmscTxlast	= 0x1000,
 };
 
-typedef struct Ctlr Ctlr;
-typedef struct Udev Udev;
 
-typedef int (Unpackfn)(Ether*, Block*);
-typedef void (Transmitfn)(Ctlr*, Block*);
 
-struct Ctlr {
+	
+static Cmdtab cmds[] = {
+	{ Bind,		"bind",		7, },
+	{ Unbind,	"unbind",	0, },
+};
+
+
+
+
+
+typedef struct board_info {
 	Ether*	edev;
-	Udev*	udev;
 	Chan*	inchan;
 	Chan*	outchan;
 	char*	buf;
@@ -50,367 +60,200 @@ struct Ctlr {
 	uint	txbuf;
 	uint	txpkt;
 	QLock;
-};
 
-struct Udev {
-	char	*name;
-	Unpackfn *unpack;
-	Transmitfn *transmit;
-};
+	void *io_addr;	/* Register I/O base address */
+	void *io_data;	/* Data I/O address */
+	ushort irq;		/* IRQ */
+
+	ushort tx_pkt_cnt;
+	ushort queue_pkt_len;
+	ushort queue_start_addr;
+	ushort dbug_cnt;
+	uchar io_mode;		/* 0:word, 2:byte */
+	uchar phy_addr;
+
+//	void (*inblk)(void __iomem *port, void *data, int length);
+//	void (*outblk)(void __iomem *port, void *data, int length);
+//	void (*dumpblk)(void __iomem *port, int length);
+
+//	struct resource	*addr_res;   /* resources found */
+//	struct resource *data_res;
+//	struct resource	*addr_req;   /* resources requested */
+//	struct resource *data_req;
+//	struct resource *irq_res;
+
+//	struct timer_list timer;
+//	unsigned char srom[128];
+
+//	struct mii_if_info mii;
+	ulong msg_enable;
+} board_info_t;
+
+
+/* function declaration ------------------------------------- */
+static void dm9000_reset(Ether* edev);
+static void dm9000_probe(Ether* edev);
+static int dm9000_open(Ether* edev);
+//static int dm9000_start_xmit(struct sk_buff *, struct net_device *);
+//static int dm9000_stop(struct net_device *);
+
+
+//static void dm9000_timer(unsigned long);
+static void dm9000_init_dm9000(Ether* edev);
+
+//static irqreturn_t dm9000_interrupt(int, void *);
+
+//static int dm9000_phy_read(struct net_device *dev, int phyaddr_unsused, int reg);
+//static void dm9000_phy_write(struct net_device *dev, int phyaddr_unused, int reg,int value);
+//static ushort read_srom_word(board_info_t *, int);
+//static void dm9000_rx(struct net_device *);
+//static void dm9000_hash_table(struct net_device *);
+
+//#define DM9000_PROGRAM_EEPROM
+#ifdef DM9000_PROGRAM_EEPROM
+static void program_eeprom(board_info_t * db);
+#endif
+/* DM9000 network board routine ---------------------------- */
+
+static inline uchar readb(void *addr){
+	return *(uchar *)addr;
+}
+
+static inline void writeb(int data, void *addr){
+	*(uchar *)addr = (uchar)data;
+}
+
+static uchar
+ior(board_info_t * db, int reg)
+{
+	uchar *addr;
+	addr = (uchar *)db->io_addr + reg;
+	return readb(addr);
+}
+
+static void
+iow(board_info_t * db, int data, int reg){
+	uchar *addr;
+	addr = (uchar *)db->io_addr + reg;
+	writeb(data,addr);
+}
+
+static void
+dm9000_reset(Ether* edev)
+{
+	board_info_t *db;
+	db = edev->ctlr;
+	print("****************************dm9000x: resetting,ioaddr=%lux",(ulong)(db->io_addr));
+	/* RESET device */
+	iow(db, NCR_RST, DM9000_NCR);
+}
+
+static void 
+dm9000_probe(Ether *edev)
+{
+	board_info_t *db;
+	db = edev->ctlr;
+	db->io_addr = (void *)DM9000_IOBASE;
+	db->io_data = (void *)DM9000_DATABASE;
+	print("****************************dm9000x: setting ioaddr=%lux , iodata=%lux", (ulong)(db->io_addr), (ulong)(db->io_data));
+	dm9000_open(edev);
+}
 	
-static Cmdtab cmds[] = {
-	{ Bind,		"bind",		7, },
-	{ Unbind,	"unbind",	0, },
-};
 
-static Unpackfn unpackcdc, unpackasix, unpacksmsc;
-static Transmitfn transmitcdc, transmitasix, transmitsmsc;
-
-static Udev udevtab[] = {
-	{ "cdc",	unpackcdc,	transmitcdc, },
-	{ "asix",	unpackasix,	transmitasix, },
-	{ "smsc",	unpacksmsc,	transmitsmsc, },
-	{ nil },
-};
-
-static void
-dump(int c, Block *b)
-{
-	int s, i;
-
-	s = splhi();
-	print("%c%ld:", c, BLEN(b));
-	for(i = 0; i < 32; i++)
-		print(" %2.2ux", b->rp[i]);
-	print("\n");
-	splx(s);
-}
-
+/*
+ *  Open the interface.
+ *  The interface is opened whenever "ifconfig" actives it.
+ */
 static int
-unpack(Ether *edev, Block *b, int m)
+dm9000_open(Ether *edev)
 {
-	Block *nb;
-	Ctlr *ctlr;
+	board_info_t *db;
+	db = edev->ctlr;
 
-	ctlr = edev->ctlr;
-	ddump('?', b);
-	if(m == BLEN(b)){
-		etheriq(edev, b, 1);
-		ctlr->rxpkt++;
-		return 1;
-	}
-	nb = iallocb(m);
-	if(nb != nil){
-		memmove(nb->wp, b->rp, m);
-		nb->wp += m;
-		etheriq(edev, nb, 1);
-		ctlr->rxpkt++;
-	}else
-		edev->soverflows++;
-	b->rp += m;
+	print("entering dm9000_open\n");
+
+//	if (request_irq(dev->irq, &dm9000_interrupt, DM9000_IRQ_FLAGS, dev->name, dev))
+//		return -EAGAIN;
+/* TODO:add irq*/
+
+	/* Initialize DM9000 board */
+	dm9000_reset(edev);
+	dm9000_init_dm9000(edev);
+
+	/* Init driver variable */
+	db->dbug_cnt = 0;
+
+	/* set and active a timer process */
+/*
+	init_timer(&db->timer);
+	db->timer.expires  = DM9000_TIMER_WUT;
+	db->timer.data     = (unsigned long) dev;
+	db->timer.function = &dm9000_timer;
+	add_timer(&db->timer);
+
+	mii_check_media(&db->mii, netif_msg_link(db), 1);
+	netif_start_queue(dev);
+*/
+
 	return 0;
-}
-
-static int
-unpackcdc(Ether *edev, Block *b)
-{
-	int m;
-
-	m = BLEN(b);
-	if(m < 6)
-		return -1;
-	return unpack(edev, b, m);
-}
-
-static int
-unpackasix(Ether *edev, Block *b)
-{
-	ulong hd;
-	int m;
-	uchar *wp;
-
-	if(BLEN(b) < 4)
-		return -1;
-	hd = GET4(b->rp);
-	b->rp += 4;
-	m = hd & 0xFFFF;
-	hd >>= 16;
-	if(m != (~hd & 0xFFFF))
-		return -1;
-	m = ROUND(m, 2);
-	if(m < 6 || m > BLEN(b))
-		return -1;
-	if((wp = b->rp + m) != b->wp && b->wp - wp < 4)
-		b->wp = wp;
-	return unpack(edev, b, m);
-}
-
-static int
-unpacksmsc(Ether *edev, Block *b)
-{
-	ulong hd;
-	int m;
-	
-	ddump('@', b);
-	if(BLEN(b) < 4)
-		return -1;
-	hd = GET4(b->rp);
-	b->rp += 4;
-	m = hd >> 16;
-	if(m < 6 || m > BLEN(b))
-		return -1;
-	if(BLEN(b) - m < 4)
-		b->wp = b->rp + m;
-	if(hd & SmscRxerror){
-		edev->frames++;
-		b->rp += m;
-		if(BLEN(b) == 0){
-			freeb(b);
-			return 1;
-		}
-	}else if(unpack(edev, b, m) == 1)
-		return 1;
-	if((m &= 3) != 0)
-		b->rp += 4 - m;
-	return 0;
-}
-
-static void
-transmit(Ctlr *ctlr, Block *b)
-{
-	Chan *c;
-
-	ddump('!', b);
-	c = ctlr->outchan;
-	devtab[c->type]->bwrite(c, b, 0);
-}
-
-static void
-transmitcdc(Ctlr *ctlr, Block *b)
-{
-	transmit(ctlr, b);
-}
-
-static void
-transmitasix(Ctlr *ctlr, Block *b)
-{
-	int n;
-
-	n = BLEN(b) & 0xFFFF;
-	n |= ~n << 16;
-	padblock(b, 4);
-	PUT4(b->rp, n);
-	if(BLEN(b) % ctlr->maxpkt == 0){
-		padblock(b, -4);
-		PUT4(b->wp, 0xFFFF0000);
-		b->wp += 4;
-	}
-	transmit(ctlr, b);
-}
-
-static void
-transmitsmsc(Ctlr *ctlr, Block *b)
-{
-	int n;
-
-	n = BLEN(b) & 0x7FF;
-	padblock(b, 8);
-	PUT4(b->rp, n | SmscTxfirst | SmscTxlast);
-	PUT4(b->rp+4, n);
-	transmit(ctlr, b);
-}
-
-static void
-etherusbproc(void *a)
-{
-	Ether *edev;
-	Ctlr *ctlr;
-	Chan *c;
-	Block *b;
-
-	edev = a;
-	ctlr = edev->ctlr;
-	c = ctlr->inchan;
-	b = nil;
-	if(waserror()){
-		print("etherusbproc: error exit %s\n", up->env->errstr);
-		pexit(up->env->errstr, 1);
-		return;
-	}
-	for(;;){
-		if(b == nil){
-			b = devtab[c->type]->bread(c, ctlr->bufsize, 0);
-			ctlr->rxbuf++;
-		}
-		switch(ctlr->udev->unpack(edev, b)){
-		case -1:
-			edev->buffs++;
-			freeb(b);
-			/* fall through */
-		case 1:
-			b = nil;
-			break;
-		}
-	}
 }
 
 /*
- * bind type indev outdev mac bufsize maxpkt
+ * Initilize dm9000 board
  */
 static void
-bind(Ctlr *ctlr, Udev *udev, Cmdbuf *cb)
+dm9000_init_dm9000(Ether *edev)
 {
-	Chan *inchan, *outchan;
-	char *buf;
-	uint bufsize, maxpkt;
+	board_info_t *db;
+	db = edev->ctlr;
 
-	qlock(ctlr);
-	inchan = outchan = nil;
-	buf = nil;
-	if(waserror()){
-		free(buf);
-		if(inchan)
-			cclose(inchan);
-		if(outchan)
-			cclose(outchan);
-		qunlock(ctlr);
-		nexterror();
-	}
-	if(ctlr->buf != nil)
-		cmderror(cb, "already bound to a device");
-	maxpkt = strtol(cb->f[6], 0, 0);
-	if(maxpkt < 8 || maxpkt > 512)
-		cmderror(cb, "bad maxpkt");
-	bufsize = strtol(cb->f[5], 0, 0);
-	if(bufsize < maxpkt || bufsize > 32*1024)
-		cmderror(cb, "bad bufsize");
-	buf = smalloc(bufsize);
-	inchan = namec(cb->f[2], Aopen, OREAD, 0);
-	outchan = namec(cb->f[3], Aopen, OWRITE, 0);
-	assert(inchan != nil && outchan != nil);
-	if(parsemac(ctlr->edev->ea, cb->f[4], Eaddrlen) != Eaddrlen)
-		cmderror(cb, "bad etheraddr");
-	memmove(ctlr->edev->addr, ctlr->edev->ea, Eaddrlen);
-	print("\netherusb %s: %E\n", udev->name, ctlr->edev->addr);
-	ctlr->buf = buf;
-	ctlr->inchan = inchan;
-	ctlr->outchan = outchan;
-	ctlr->bufsize = bufsize;
-	ctlr->maxpkt = maxpkt;
-	ctlr->udev = udev;
-	kproc("etherusb", etherusbproc, ctlr->edev, 0);
-	poperror();
-	qunlock(ctlr);
+	print("entering %s\n","dm9000_init_dm9000");
+
+	/* I/O mode */
+	db->io_mode = ior(db, DM9000_ISR) >> 6;	/* ISR bit7:6 keeps I/O mode */
+
+	/* GPIO0 on pre-activate PHY */
+	iow(db, DM9000_GPR, 0);	/* REG_1F bit0 activate phyxcer */
+	iow(db, DM9000_GPCR, GPCR_GEP_CNTL);	/* Let GPIO0 output */
+	iow(db, DM9000_GPR, 0);	/* Enable PHY */
+
+	/* Program operating register */
+	iow(db, DM9000_TCR, 0);	        /* TX Polling clear */
+	iow(db, DM9000_BPTR, 0x3f);	/* Less 3Kb, 200us */
+	iow(db, DM9000_FCR, 0xff);	/* Flow Control */
+	iow(db, DM9000_SMCR, 0);        /* Special Mode */
+	/* clear TX status */
+	iow(db, DM9000_NSR, NSR_WAKEST | NSR_TX2END | NSR_TX1END);
+	iow(db, DM9000_ISR, ISR_CLR_STATUS); /* Clear interrupt status */
+
+	/* Set address filter table */
+//	dm9000_hash_table(dev);
+
+	/* Activate DM9000 */
+	iow(db, DM9000_RCR, RCR_DIS_LONG | RCR_DIS_CRC | RCR_RXEN);
+	/* Enable TX/RX interrupt mask */
+	iow(db, DM9000_IMR, IMR_PAR | IMR_PTM | IMR_PRM);
+
+	/* Init Driver variable */
+	db->tx_pkt_cnt = 0;
+	db->queue_pkt_len = 0;
+//	dev->trans_start = 0;
 }
 
 static void
-unbind(Ctlr *ctlr)
-{
-	qlock(ctlr);
-	if(ctlr->buf != nil){
-		free(ctlr->buf);
-		ctlr->buf = nil;
-		if(ctlr->inchan)
-			cclose(ctlr->inchan);
-		if(ctlr->outchan)
-			cclose(ctlr->outchan);
-		ctlr->inchan = ctlr->outchan = nil;
-	}
-	qunlock(ctlr);
-}
-
-static long
-etherusbifstat(Ether* edev, void* a, long n, ulong offset)
-{
-	Ctlr *ctlr;
-	char *p;
-	int l;
-
-	ctlr = edev->ctlr;
-	p = malloc(READSTR);
-	l = 0;
-
-	l += snprint(p+l, READSTR-l, "rxbuf: %ud\n", ctlr->rxbuf);
-	l += snprint(p+l, READSTR-l, "rxpkt: %ud\n", ctlr->rxpkt);
-	l += snprint(p+l, READSTR-l, "txbuf: %ud\n", ctlr->txbuf);
-	l += snprint(p+l, READSTR-l, "txpkt: %ud\n", ctlr->txpkt);
-	USED(l);
-
-	n = readstr(offset, a, n, p);
-	free(p);
-	return n;
-}
-
-static void
-etherusbtransmit(Ether *edev)
-{
-	Ctlr *ctlr;
-	Block *b;
-	
-	ctlr = edev->ctlr;
-	while((b = qget(edev->oq)) != nil){
-		ctlr->txpkt++;
-		if(ctlr->buf == nil)
-			freeb(b);
-		else{
-			ctlr->udev->transmit(ctlr, b);
-			ctlr->txbuf++;
-		}
-	}
-}
-
-static long
-etherusbctl(Ether* edev, void* buf, long n)
-{
-	Ctlr *ctlr;
-	Cmdbuf *cb;
-	Cmdtab *ct;
-	Udev *udev;
-
-	if((ctlr = edev->ctlr) == nil)
-		error(Enonexist);
-
-	cb = parsecmd(buf, n);
-	if(waserror()){
-		free(cb);
-		nexterror();
-	}
-	ct = lookupcmd(cb, cmds, nelem(cmds));
-	switch(ct->index){
-	case Bind:
-		for(udev = udevtab; udev->name; udev++)
-			if(strcmp(cb->f[1], udev->name) == 0)
-				break;
-		if(udev->name == nil)
-			cmderror(cb, "unknown etherusb type");
-		bind(ctlr, udev, cb);
-		break;
-	case Unbind:
-		unbind(ctlr);
-		break;
-	default:
-		cmderror(cb, "unknown etherusb control message");
-	}
-	poperror();
-	free(cb);
-	return n;
-}
-
-static void
-etherusbattach(Ether* edev)
-{
-	Ctlr *ctlr;
+dm9000_attach(Ether *edev){
+	board_info_t *ctlr;
 
 	ctlr = edev->ctlr;
 	ctlr->edev = edev;
 }
 
 static int
-etherusbpnp(Ether* edev)
+ethers3cinit(Ether* edev)
 {
-	Ctlr *ctlr;
+	board_info_t *ctlr;
 
-	ctlr = malloc(sizeof(Ctlr));
+	ctlr = malloc(sizeof(board_info_t));
 	edev->ctlr = ctlr;
 	edev->irq = -1;
 	edev->mbps = 100;	/* TODO: get this from usbether */
@@ -418,11 +261,11 @@ etherusbpnp(Ether* edev)
 	/*
 	 * Linkage to the generic ethernet driver.
 	 */
-	edev->attach = etherusbattach;
-	edev->transmit = etherusbtransmit;
-	edev->interrupt = nil;
-	edev->ifstat = etherusbifstat;
-	edev->ctl = etherusbctl;
+	edev->attach = dm9000_attach;
+	edev->transmit = 0;
+	edev->interrupt = 0;
+	edev->ifstat = 0;
+	edev->ctl = 0;
 
 	edev->arg = edev;
 	/* TODO: promiscuous, multicast (for ipv6), shutdown (for reboot) */
@@ -430,11 +273,13 @@ etherusbpnp(Ether* edev)
 //	edev->shutdown = etherusbshutdown;
 //	edev->multicast = etherusbmulticast;
 
+	dm9000_probe(edev);
+
 	return 0;
 }
 
 void
-etherusblink(void)
+ethers3clink(void)
 {
-	addethercard("usb", etherusbpnp);
+	addethercard("DM9000", ethers3cinit);
 }
