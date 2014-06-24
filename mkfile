@@ -27,7 +27,6 @@ OBJ=\
 	fpi.$O\
 	fpiarm.$O\
 	fpimem.$O\
-	ethers3c.$O\
 	$IP\
 	$DEVS\
 	$ETHERS\

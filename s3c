@@ -11,6 +11,9 @@ dev
 	ip  ip ipv6 ipaux iproute arp netlog ptclbsum iprouter plan9 nullmedium pktmedium netaux
 	ether netif netaux
 
+link
+	ethers3c
+
 ip
 	il
 	tcp
