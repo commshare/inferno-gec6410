@@ -61,8 +61,8 @@ typedef struct board_info {
 	uint	txpkt;
 	QLock;
 
-	void *io_addr;	/* Register I/O base address */
-	void *io_data;	/* Data I/O address */
+	ulong *io_addr;	/* Register I/O base address */
+	ulong *io_data;	/* Data I/O address */
 	ushort irq;		/* IRQ */
 
 	ushort tx_pkt_cnt;
@@ -115,27 +115,37 @@ static void program_eeprom(board_info_t * db);
 #endif
 /* DM9000 network board routine ---------------------------- */
 
-static inline uchar readb(void *addr){
+
+static inline uchar
+readb(ulong *addr){
 	return *(uchar *)addr;
 }
 
-static inline void writeb(int data, void *addr){
-	*(uchar *)addr = (uchar)data;
+static inline void
+writeb(int value, ulong *addr){
+	*(uchar *)addr = (uchar)value;
 }
+
+/*
+ *   Read a byte from I/O port
+ */
 
 static uchar
 ior(board_info_t * db, int reg)
 {
-	uchar *addr;
-	addr = (uchar *)db->io_addr + reg;
-	return readb(addr);
+	writeb(reg, db->io_addr);
+	return readb(db->io_data);
 }
 
+/*
+ *   Write a byte to I/O port
+ */
+
 static void
-iow(board_info_t * db, int data, int reg){
-	uchar *addr;
-	addr = (uchar *)db->io_addr + reg;
-	writeb(data,addr);
+iow(board_info_t * db, int reg, int value)
+{
+	writeb(reg, db->io_addr);
+	writeb(value, db->io_data);
 }
 
 static void
@@ -145,7 +155,7 @@ dm9000_reset(Ether* edev)
 	db = edev->ctlr;
 	print("****************************dm9000x: resetting,ioaddr=%lux",(ulong)(db->io_addr));
 	/* RESET device */
-	iow(db, NCR_RST, DM9000_NCR);
+	iow(db, DM9000_NCR, NCR_RST);
 }
 
 static void 
@@ -153,17 +163,13 @@ dm9000_probe(Ether *edev)
 {
 	board_info_t *db;
 	db = edev->ctlr;
-	db->io_addr = (void *)DM9000_IOBASE;
-	db->io_data = (void *)DM9000_DATABASE;
+	db->io_addr = (ulong *)DM9000_ADDR;
+	db->io_data = (ulong *)DM9000_DATA;
 	print("****************************dm9000x: setting ioaddr=%lux , iodata=%lux", (ulong)(db->io_addr), (ulong)(db->io_data));
 	dm9000_open(edev);
 }
 	
 
-/*
- *  Open the interface.
- *  The interface is opened whenever "ifconfig" actives it.
- */
 static int
 dm9000_open(Ether *edev)
 {
@@ -278,11 +284,21 @@ ethers3cinit(Ether* edev)
 	return 0;
 }
 
+board_info_t test;
 void
 ethers3clink(void)
 {
-	ulong *id;
-	id = (ulong *)(DM9000_IOBASE+DM9000_VIDL);
-	print("DM9000 ID:%lux",*id);
+	test.io_addr = (ulong *)DM9000_ADDR;
+	test.io_data = (ulong *)DM9000_DATA;
+	print("****************************dm9000x: setting ioaddr=%lux , iodata=%lux", (ulong)(test.io_addr), (ulong)(test.io_data));
+	print("DM9000 NCR:%lux\n",ior(&test, DM9000_NCR));
+	iow(&test, DM9000_NCR, NCR_RST);
+	print("DM9000 NCR:%lux\n",ior(&test, DM9000_NCR));
+	ulong vidl=ior(&test, DM9000_VIDL);
+	ulong vidh=ior(&test, DM9000_VIDH);
+	ulong pidl=ior(&test, DM9000_PIDL);
+	ulong pidh=ior(&test, DM9000_PIDH);
+	ulong id = (pidh << 24)|(pidl << 16) | (vidh << 8) | (vidl) ;
+	print("DM9000 ID:%lux\n",id);
 	addethercard("DM9000", ethers3cinit);
 }
