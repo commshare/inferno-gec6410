@@ -16,6 +16,14 @@
 
 #include "dm9000.h"
 
+/* Board/System/Debug information/definition ---------------- */
+
+#define DM9000_PHY		0x40	/* PHY address 0x01 */
+#define DM9000_CMD         0X04    //1:DATA,0:ADDR
+
+#define CARDNAME "dm9000"
+#define PFX CARDNAME ": "
+
 
 #define	GET4(p)		((p)[3]<<24 | (p)[2]<<16 | (p)[1]<<8  | (p)[0])
 #define	PUT4(p, v)	((p)[0] = (v), (p)[1] = (v)>>8, \
@@ -415,6 +423,28 @@ dm9000_init_dm9000(Ether *edev)
 //	dev->trans_start = 0;
 }
 
+//#define DM9000_MULTICAST
+#ifdef DM9000_MULTICAST
+
+/*
+ *  Calculate the CRC valude of the Rx packet
+ *  flag = 1 : return the reverse CRC (for the received packet CRC)
+ *         0 : return the normal CRC (for Hash Table index)
+ */
+
+static unsigned long
+cal_CRC(unsigned char *Data, unsigned int Len, uchar flag)
+{
+
+       ulong crc = ether_crc_le(Len, Data);
+
+       if (flag)
+               return ~crc;
+
+       return crc;
+}
+#endif
+
 /*
  *  Set DM9000 multicast address
  */
@@ -450,12 +480,127 @@ dm9000_hash_table(Ether *edev)
 //	}
 
 	/* Write the hash table to MAC MD table */
-	for (i = 0, oft = 0x16; i < 4; i++) {
-		iow(db, oft++, hash_table[i] & 0xff);
-		iow(db, oft++, (hash_table[i] >> 8) & 0xff);
-	}
+//	for (i = 0, oft = 0x16; i < 4; i++) {
+//		iow(db, oft++, hash_table[i] & 0xff);
+//		iow(db, oft++, (hash_table[i] >> 8) & 0xff);
+//	}
 
 	iunlock(db);
+}
+
+/*
+ *  Read a word data from SROM
+ */
+static ushort
+read_srom_word(board_info_t * db, int offset)
+{
+	iow(db, DM9000_EPAR, offset);
+	iow(db, DM9000_EPCR, EPCR_ERPRR);
+	delay(8);		/* according to the datasheet 200us should be enough,
+				   but it doesn't work */
+	iow(db, DM9000_EPCR, 0x0);
+	return (ior(db, DM9000_EPDRL) + (ior(db, DM9000_EPDRH) << 8));
+}
+
+#ifdef DM9000_PROGRAM_EEPROM
+/*
+ * Write a word data to SROM
+ */
+static void
+write_srom_word(board_info_t * db, int offset, u16 val)
+{
+	iow(db, DM9000_EPAR, offset);
+	iow(db, DM9000_EPDRH, ((val >> 8) & 0xff));
+	iow(db, DM9000_EPDRL, (val & 0xff));
+	iow(db, DM9000_EPCR, EPCR_WEP | EPCR_ERPRW);
+	delay(8);		/* same shit */
+	iow(db, DM9000_EPCR, 0);
+}
+
+/*
+ * Only for development:
+ * Here we write static data to the eeprom in case
+ * we don't have valid content on a new board
+ */
+static void
+program_eeprom(board_info_t * db)
+{
+	u16 eeprom[] = { 0x0c00, 0x007f, 0x1300,	/* MAC Address */
+		0x0000,		/* Autoload: accept nothing */
+		0x0a46, 0x9000,	/* Vendor / Product ID */
+		0x0000,		/* pin control */
+		0x0000,
+	};			/* Wake-up mode control */
+	int i;
+	for (i = 0; i < 8; i++)
+		write_srom_word(db, i, eeprom[i]);
+}
+#endif
+
+/*
+ *   Write a word to phyxcer
+ */
+static void
+dm9000_phy_write(Ether *edev, int phyaddr_unused, int reg, int value)
+{
+	board_info_t *db = edev->ctlr;
+//	unsigned long flags;
+	unsigned long reg_save;
+
+	ilock(db);
+
+	/* Save previous register address */
+	reg_save = readb(db->io_addr);
+
+	/* Fill the phyxcer register into REG_0C */
+	iow(db, DM9000_EPAR, DM9000_PHY | reg);
+
+	/* Fill the written data into REG_0D & REG_0E */
+	iow(db, DM9000_EPDRL, (value & 0xff));
+	iow(db, DM9000_EPDRH, ((value >> 8) & 0xff));
+
+	iow(db, DM9000_EPCR, 0xa);	/* Issue phyxcer write command */
+	microdelay(500);		/* Wait write complete */
+	iow(db, DM9000_EPCR, 0x0);	/* Clear phyxcer write command */
+
+	/* restore the previous address */
+	writeb(reg_save, db->io_addr);
+
+	iunlock(db);
+}
+
+/*
+ *   Read a word from phyxcer
+ */
+static int
+dm9000_phy_read(Ether *edev, int phy_reg_unused, int reg)
+{
+	board_info_t *db = edev->ctlr;
+//	unsigned long flags;
+	unsigned int reg_save;
+	int ret;
+
+	ilock(db);
+
+	/* Save previous register address */
+	reg_save = readb(db->io_addr);
+
+	/* Fill the phyxcer register into REG_0C */
+	iow(db, DM9000_EPAR, DM9000_PHY | reg);
+
+	iow(db, DM9000_EPCR, 0xc);	/* Issue phyxcer read command */
+	microdelay(100);		/* Wait read complete */
+	iow(db, DM9000_EPCR, 0x0);	/* Clear phyxcer read command */
+
+	/* The read data keeps on REG_0D & REG_0E */
+	ret = (ior(db, DM9000_EPDRH) << 8) | ior(db, DM9000_EPDRL);
+
+	/* restore the previous address */
+	writeb(reg_save, db->io_addr);
+
+	iunlock(db);
+
+	return ret;
 }
 
 static void
