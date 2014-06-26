@@ -52,6 +52,8 @@ static Cmdtab cmds[] = {
 	{ Unbind,	"unbind",	0, },
 };
 
+static uchar def_ea[6]={ 0x0c, 0x00, 0x00, 0x7f, 0x13, 0x00};
+
 
 
 
@@ -93,7 +95,7 @@ typedef struct board_info {
 //	struct resource *irq_res;
 
 //	struct timer_list timer;
-//	unsigned char srom[128];
+	unsigned char srom[128];
 
 //	struct mii_if_info mii;
 	ulong msg_enable;
@@ -117,7 +119,7 @@ static void dm9000_interrupt(Ureg *ureg, void *arg);
 
 //static int dm9000_phy_read(struct net_device *dev, int phyaddr_unsused, int reg);
 //static void dm9000_phy_write(struct net_device *dev, int phyaddr_unused, int reg,int value);
-//static ushort read_srom_word(board_info_t *, int);
+static ushort read_srom_word(board_info_t *, int);
 static void dm9000_rx(Ether *edev);
 static void dm9000_hash_table(Ether *edev);
 
@@ -446,6 +448,17 @@ cal_CRC(unsigned char *Data, unsigned int Len, uchar flag)
 #endif
 
 /*
+ *	Set DM9000 MAC address
+ */
+static void
+dm9000_set_mac(board_info_t * db,uchar *ea){
+	int i,oft;
+	for (i = 0, oft =DM9000_PAR; i < 6; i++, oft++){
+		iow(db, oft, ea[i]);
+	}
+}
+
+/*
  *  Set DM9000 multicast address
  */
 static void
@@ -461,10 +474,19 @@ dm9000_hash_table(Ether *edev)
 	dprint("dm9000_hash_table()\n");
 
 	ilock(db);
-
-	for (i = 0, oft =DM9000_PAR; i < 6; i++, oft++)
-		edev->ea[i]=ior(db, oft);
-//		iow(db, oft, dev->dev_addr[i]);
+	
+/*FIXME srom read not available
+	for (i = 0; i < 64; i++)
+		((ushort *) db->srom)[i] = read_srom_word(db, i);
+	for (i = 0, oft =DM9000_PAR; i < 6; i++, oft++){
+		edev->ea[i] = db->srom[i];
+		iow(db, oft, edev->ea[i]);
+	}
+*/
+	dm9000_set_mac(db, def_ea);
+	for (i = 0, oft =DM9000_PAR; i < 6; i++, oft++){
+		edev->ea[i] = ior(db, oft);
+	}
 
 	/* Clear Hash Table */
 	for (i = 0; i < 4; i++)
@@ -484,6 +506,10 @@ dm9000_hash_table(Ether *edev)
 //		iow(db, oft++, hash_table[i] & 0xff);
 //		iow(db, oft++, (hash_table[i] >> 8) & 0xff);
 //	}
+	for (i = 0, oft = 0x16; i < 4; i++) {
+		iow(db, oft++, 0x00);
+		iow(db, oft++, 0x00);
+	}
 
 	iunlock(db);
 }
@@ -959,9 +985,18 @@ ethers3clink(void)
 	}
 	id = (pidh << 24)|(pidl << 16) | (vidh << 8) | (vidl) ;
 	print("DM9000 ID:%lux\n",id);
+/*FIXME :srom read is not available
+	for (i = 0; i < 64; i++)
+		((ushort *) test->srom)[i] = read_srom_word(test, i);
+	dprint("SROM BYTE 0:%lux\n",(ulong)test->srom[0]);
+	dprint("SROM BYTE 8:%lux\n",(ulong)test->srom[8]);
+*/
+	dm9000_set_mac(test, def_ea);
 	print("DM9000 MAC:");
 	for (i = 0, oft =DM9000_PAR; i < 6; i++, oft++){
-		ea[i]=ior(test, oft);
+//		ea[i] = test->srom[i];
+//		iow(test, oft, ea[i]);
+		ea[i] = ior(test, oft);
 		print("%2ux",ea[i]);
 		if(i!=5)print(":");
 	}
