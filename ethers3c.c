@@ -632,6 +632,8 @@ dm9000_phy_read(Ether *edev, int phy_reg_unused, int reg)
 static void
 dm9000_attach(Ether *edev){
 	board_info_t *ctlr;
+	
+	dprint("****************************dm9000x: dm9000_attach***************************\n");
 
 	ctlr = edev->ctlr;
 	ctlr->edev = edev;
