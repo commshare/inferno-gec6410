@@ -13,6 +13,8 @@ dev
 
 link
 	ethers3c
+	ethermedium
+	loopbackmedium
 
 ip
 	il

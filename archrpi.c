@@ -3,6 +3,7 @@
 #include "mem.h"
 #include "dat.h"
 #include "fns.h"
+#include "io.h"
 
 #include "../port/netif.h"
 #include "etherif.h"
@@ -34,9 +35,9 @@ archether(unsigned ctlrno, Ether *ether)
 {
     switch(ctlrno) {
     case 0:
-        ether->type = "unknown";
+        ether->type = "DM9000";
         ether->ctlrno = ctlrno;
-        ether->irq = -1;
+        ether->irq = INT_EINT4;
         ether->nopt = 0;
         ether->mbps = 100;
         return 1;
