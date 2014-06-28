@@ -40,6 +40,7 @@ LIBNAMES=${LIBS:%=lib%.a}
 LIBDIRS=$LIBS
 
 HFILES=\
+	s3c6410.h\
 	armv6.h\
 	mem.h\
 	dat.h\
@@ -47,11 +48,15 @@ HFILES=\
 	io.h\
 	fpi.h\
 	serial.h\
+	dm9000.h\
+	etherif.h\
 	include/u.h\
 	include/ureg.h\
 	include/lib9.h\
+	include/plat/regs-gpio.h\
+	include/plat/gpio-bank-n.h\
 
-CFLAGS=-wFV -I./include/ -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp
+CFLAGS=-wFV -I./include -I$ROOT/Inferno/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp
 KERNDATE=`{$NDATE}
 
 default:V: i$CONF

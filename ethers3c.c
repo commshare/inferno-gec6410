@@ -15,6 +15,7 @@
 #include "../ip/ip.h"
 
 #include "dm9000.h"
+#include "plat/regs-gpio.h"
 
 /* Board/System/Debug information/definition ---------------- */
 
@@ -64,7 +65,7 @@ typedef struct board_info {
 	Ether*	edev;
 	Chan*	inchan;
 	Chan*	outchan;
-	char*	buf;
+//	char*	buf;
 	int	bufsize;
 	int	maxpkt;
 	uint	rxbuf;
@@ -384,6 +385,30 @@ dm9000_init_dm9000(Ether *edev)
 	db = edev->ctlr;
 
 	dprint("entering %s\n","dm9000_init_dm9000");
+
+/* srom init
+	tmp = __raw_readl(S3C64XX_SROM_BW);
+	tmp &=~(0xF<<4);
+//	tmp |= (1<<4);
+	tmp |= (1<<7)|(1<<6)|(1<<4);
+	writel(tmp, S3C64XX_SROM_BW);
+	
+	writel(~(0xFFFFFFFF<<0), S3C64XX_SROM_BC1);
+	writel((0x0<<28)|(0x4<<24)|(0xd<<16)|(0x1<<12)|(0x4<<8)|(0x6<<4)|(0x0<<0), S3C64XX_SROM_BC1);
+*/
+
+	/* DM9000 EINT*/
+	writel((readl( (ulong *)S3C64XX_GPNCON) & ~(0x3 <<14)) | (0x2 << 14), (ulong *)S3C64XX_GPNCON);	/* GPN7 to EINT */
+	writel((readl( (ulong *)S3C64XX_GPNPUD) &~(0x3<<14)),(ulong *)S3C64XX_GPNPUD);
+
+	writel((readl( (ulong *)S3C64XX_EINT0CON0) & ~(0x7 <<12)) | (0x1 << 12), (ulong *)S3C64XX_EINT0CON0);		/* EINT7 to high level triggered */
+
+	writel((readl( (ulong *)S3C64XX_EINT0FLTCON0)& ~(0x3 <<6)) | (0x1 << 7), (ulong *)S3C64XX_EINT0FLTCON0);
+
+	writel((readl( (ulong *)S3C64XX_EINT0PEND)&~(0x1<<7)),(ulong *)S3C64XX_EINT0PEND);	
+	writel(readl( (ulong *)S3C64XX_EINT0MASK) & ~(0x1 << 7), (ulong *)S3C64XX_EINT0MASK);		/* EINT7 unmask */
+	
+	//writel(readl(S3C64XX_VIC1INTENABLE) | (0x1 << 0), S3C64XX_VIC1INTENABLE);	/* EINT7 enable */
 
 	/* I/O mode */
 	db->io_mode = ior(db, DM9000_ISR) >> 6;	/* ISR bit7:6 keeps I/O mode */
@@ -736,6 +761,7 @@ dm9000_start_xmit(struct board_info *db, Block *b)
 
 	/* free this Block */
 	freeb(b);
+	dprint("dm9000 xmit over\n");
 
 	return 0;
 }
@@ -746,14 +772,12 @@ ethers3ctransmit(Ether *edev)
 	board_info_t *db;
 	Block *b;
 	
+	dprint("ethers3ctransmit\n");
 	db = edev->ctlr;
 	while((b = qget(edev->oq)) != nil){
-		if(db->buf == nil)
-			freeb(b);
-		else{
-			dm9000_start_xmit(db, b);
-			db->txbuf++;
-		}
+		dprint("transmitting a block\n");
+		dm9000_start_xmit(db, b);
+		db->txbuf++;
 	}
 }
 
@@ -765,6 +789,7 @@ ethers3ctransmit(Ether *edev)
 static void
 dm9000_tx_done(Ether *edev, board_info_t * db)
 {
+	dprint("dm9000_tx_done\n");
 	int tx_status = ior(db, DM9000_NSR);	/* Got TX status */
 
 	if (tx_status & (NSR_TX2END | NSR_TX1END)) {
@@ -849,6 +874,7 @@ dm9000_rx(Ether *edev)
 	int GoodPacket;
 	int RxLen;
 
+	dprint("dm9000_rx\n");
 	/* Check packet ready or not */
 	do {
 		ior(db, DM9000_MRCMDX);	/* Dummy read */
