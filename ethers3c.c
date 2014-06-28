@@ -311,8 +311,8 @@ dm9000_init_dm9000(Ether *edev)
 
 	writel((readl( (ulong *)S3C64XX_EINT0FLTCON0)& ~(0x3 <<6)) | (0x1 << 7), (ulong *)S3C64XX_EINT0FLTCON0);
 
-	writel((readl( (ulong *)S3C64XX_EINT0PEND)&~(0x1<<7)),(ulong *)S3C64XX_EINT0PEND);	
-	writel(readl( (ulong *)S3C64XX_EINT0MASK) & ~(0x1 << 7), (ulong *)S3C64XX_EINT0MASK);		/* EINT7 unmask */
+	writel( (0x1<<7),(ulong *)S3C64XX_EINT0PEND);	/* clear EINT7 PEND*/
+	//writel(readl( (ulong *)S3C64XX_EINT0MASK) & ~(0x1 << 7), (ulong *)S3C64XX_EINT0MASK);		/* EINT7 unmask */ /*leave this to intrenable*/
 	
 	//writel(readl(S3C64XX_VIC1INTENABLE) | (0x1 << 0), S3C64XX_VIC1INTENABLE);	/* EINT7 enable */
 
@@ -870,7 +870,7 @@ ethers3cinit(Ether* edev)
 
 	ctlr = malloc(sizeof(board_info_t));
 	edev->ctlr = ctlr;
-	edev->irq = INT_EINT4;	/* TODO confirm irq number*/
+	edev->irq = INT_EINTG0(7);	/* TODO confirm irq number*/
 	edev->mbps = 100;	/* TODO: get this from DM9000 */
 
 	/*
