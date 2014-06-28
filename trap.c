@@ -7,6 +7,8 @@
 #include "ureg.h"
 #include "armv6.h"
 #include "../port/error.h"
+#include "plat/regs-gpio.h"
+#include "ioport.h"
 
 static char *trapnames[PsrMask+1] = {
 	[ PsrMusr ] "user mode",
@@ -113,6 +115,51 @@ fiq(Ureg* ureg)
 	}
 }
 
+void eintenable(int irq, void (*f)(Ureg*, void*), void* a){
+	Vctl *v;
+	EInt0regs *ip;
+	Intregs *ip2;
+	u32int *enable;
+	
+	u32int vicvec;
+	int eint = irq - 64;
+	
+	if(eint>27){
+		panic("eint number error");
+	}
+	ip = (EInt0regs *)EINT0REGS;
+	vicvec = eint;
+	
+	v = (Vctl*)malloc(sizeof(Vctl));
+	if(v == nil)
+		panic("irqenable: no mem");
+	v->vec = irq;
+	v->f   = f;
+	v->a   = a;
+	v->reg = &ip->EINT0PEND;
+	v->type= 0;
+	v->mask= 1 << (vicvec);
+	enable = &ip->EINT0MASK;
+
+	v->next = virq;
+	virq = v;
+//	*v->type= (*v->type & (~v->mask) );
+	*enable = (*enable | ~v->mask);
+	
+	/* enable eint in vic*/
+	if( eint <= 4){
+		irq = INT_EINT0;
+	}else if(eint <= 12){
+		irq = INT_EINT1;
+	}
+	ip2 = S3C6410_GET_INTREGS_BASE(irq);
+	vicvec=S3C6410_GET_INTREGS_VEC(irq);
+	
+	enable = &ip2->INTENABLE;
+	*enable = (1 << vicvec);
+	print("Enabled eint0 %d\n", eint);
+}
+
 void
 irqenable(int irq, void (*f)(Ureg*, void*), void* a)
 {
@@ -123,7 +170,13 @@ irqenable(int irq, void (*f)(Ureg*, void*), void* a)
 
 	u32int vicvec;
 	
-
+	if (irq < 0) {
+		panic("Invalid irqnumber");
+	}else if(irq > 63){
+		eintenable(irq, f, a);
+		return;
+	}
+	
 	ip = S3C6410_GET_INTREGS_BASE(irq);
 	vicvec=S3C6410_GET_INTREGS_VEC(irq);
 
@@ -156,6 +209,12 @@ fiqenable(int fiq, void (*f)(Ureg*, void*), void* a)
 
 	u32int vicvec;
 	
+	if (fiq < 0) {
+		panic("Invalid irqnumber");
+	}else if(fiq > 63){
+		eintenable(fiq-64, f, a);
+		return;
+	}
 
 	ip = S3C6410_GET_INTREGS_BASE(fiq);
 	vicvec=S3C6410_GET_INTREGS_VEC(fiq);
@@ -179,6 +238,20 @@ fiqenable(int fiq, void (*f)(Ureg*, void*), void* a)
 	print("Enabled irq %d\n", fiq);
 }
 
+static inline void
+irqhandler(Ureg *ureg, Vctl *v){
+	/*TODO clear intr status*/
+	v->f(ureg, v->a);
+}
+
+static inline void
+einthandler(Ureg *ureg, Vctl *v){
+	int eint = v->vec - 64;
+	/*clear pending status :write 1 to pend bit*/
+	*v->reg = v->mask;
+	v->f(ureg, v->a);
+}
+
 /* called by trap to handle irq interrupts. */
 static void
 irq(Ureg* ureg)
@@ -187,7 +260,12 @@ irq(Ureg* ureg)
 	for(v = virq; v; v = v->next) {
 		if(*v->reg & v->mask) {
 			coherence();
-			v->f(ureg, v->a);
+//			v->f(ureg, v->a);
+			if( v->vec >63){
+				einthandler(ureg, v);
+			}else{
+				irqhandler(ureg, v);
+			}
 			coherence();
 		}
 	}

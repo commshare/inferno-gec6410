@@ -1,6 +1,7 @@
 #define IOBASE			0x70000000		/* base of io regs */
 #define INTREGS0		(IOBASE+0x1200000)
 #define INTREGS1		(IOBASE+0x1300000)
+#define EINT0REGS		(IOBASE+0xf008900)
 //#define POWERREGS		(IOBASE+0x100000)
 //#define PL011REGS		(IOBASE+0x201000)
 
@@ -8,6 +9,7 @@
 //#define UART_PL01x_FR_TXFF	0x20
 
 typedef struct Intregs Intregs;
+typedef struct EInt0regs EInt0regs;
 
 /* interrupt control registers */
 struct Intregs {
@@ -24,6 +26,14 @@ struct Intregs {
 	u32int	VECTADDR[32];
 	u32int	VECTPRIORITY[32];
 	u32int	ADDRESS;
+};
+
+/* externel interrupt group 0 control registers */
+struct EInt0regs{
+	u32int	EINT0CON[2];
+	u32int	EINT0FLTCON[4];
+	u32int	EINT0MASK;
+	u32int	EINT0PEND;
 };
 
 #define	S3C6410_GET_INTREGS_BASE(vec) (struct Intregs *)((vec)<32?INTREGS0:INTREGS1)
@@ -96,6 +106,9 @@ enum {
 	INT_PENDNUP	= 62,
 	INT_ADC		= 63
 };
+
+/*EINT GROUP 0*/
+#define INT_EINTG0(n)	(64 + (n) )
 
 
 
