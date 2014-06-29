@@ -148,9 +148,9 @@ void eintenable(int irq, void (*f)(Ureg*, void*), void* a){
 	
 //fuseblk	
 	/* enable eint in vic*/
-	if( eint <= 4){
+	if( eint <= 3){
 		irq = INT_EINT0;
-	}else if(eint <= 12){
+	}else if(eint <= 11){
 		irq = INT_EINT1;
 	}
 //fuse end	
@@ -158,6 +158,8 @@ void eintenable(int irq, void (*f)(Ureg*, void*), void* a){
 	vicvec=S3C6410_GET_INTREGS_VEC(irq);
 	
 	enable = &ip2->INTENABLE;
+	v->type= &ip->INTSELECT;
+	*v->type= (*v->type & (~(1 << vicvec)) );
 	*enable = (1 << vicvec);
 	print("Enabled eint0 %d\n", eint);
 }
