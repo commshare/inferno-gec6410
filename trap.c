@@ -144,14 +144,16 @@ void eintenable(int irq, void (*f)(Ureg*, void*), void* a){
 	v->next = virq;
 	virq = v;
 //	*v->type= (*v->type & (~v->mask) );
-	*enable = (*enable | ~v->mask);
+	*enable = (*enable & ~v->mask);
 	
+//fuseblk	
 	/* enable eint in vic*/
 	if( eint <= 4){
 		irq = INT_EINT0;
 	}else if(eint <= 12){
 		irq = INT_EINT1;
 	}
+//fuse end	
 	ip2 = S3C6410_GET_INTREGS_BASE(irq);
 	vicvec=S3C6410_GET_INTREGS_VEC(irq);
 	
