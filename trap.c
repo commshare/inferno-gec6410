@@ -158,7 +158,7 @@ void eintenable(int irq, void (*f)(Ureg*, void*), void* a){
 	vicvec=S3C6410_GET_INTREGS_VEC(irq);
 	
 	enable = &ip2->INTENABLE;
-	v->type= &ip->INTSELECT;
+	v->type= &ip2->INTSELECT;
 	*v->type= (*v->type & (~(1 << vicvec)) );
 	*enable = (1 << vicvec);
 	print("Enabled eint0 %d\n", eint);
