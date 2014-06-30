@@ -348,7 +348,7 @@ dm9000_init_dm9000(Ether *edev)
 	/* Activate DM9000 */
 	iow(db, DM9000_RCR, RCR_DIS_LONG | RCR_DIS_CRC | RCR_RXEN);
 	/* Enable TX/RX interrupt mask */
-	iow(db, DM9000_IMR, IMR_PAR | IMR_PTM | IMR_PRM);
+	iow(db, DM9000_IMR, IMR_PAR | IMR_LNKCHGM | IMR_UDRUNM | IMR_ROOM | IMR_ROM | IMR_PTM | IMR_PRM);
 
 	/* Init Driver variable */
 	db->tx_pkt_cnt = 0;
@@ -750,9 +750,18 @@ dm9000_interrupt(Ureg * ureg, void *arg)
 	/* Trnasmit Interrupt check */
 	if (int_status & ISR_PTS)
 		dm9000_tx_done(edev, db);
+		
+	/* LINK Status Change check*/
+	if (int_status & ISR_LNKCHGS)
+		dprint("************************************DM9000 LINK STATUS INTERRUPT\n");
+		
+	/* TRANSMIT UNDERRUN check*/
+	if (int_status & ISR_UDRUNS)
+		dprint("************************************DM9000 TRANSMIT UNDERRUN INTERRUPT\n");	
 
 	/* Re-enable interrupt mask */
-	iow(db, DM9000_IMR, IMR_PAR | IMR_PTM | IMR_PRM);
+//	iow(db, DM9000_IMR, IMR_PAR | IMR_PTM | IMR_PRM);
+	iow(db, DM9000_IMR, IMR_PAR | IMR_LNKCHGM | IMR_UDRUNM | IMR_ROOM | IMR_ROM | IMR_PTM | IMR_PRM);
 
 	/* Restore previous register address */
 	writeb(reg_save, db->io_addr);

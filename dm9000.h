@@ -111,16 +111,20 @@
 #define FCTR_LWOT(ot)	( ot & 0xf )
 
 #define IMR_PAR             (1<<7)
+#define IMR_LNKCHGM			(1<<5)
+#define IMR_UDRUNM			(1<<4)
 #define IMR_ROOM            (1<<3)
 #define IMR_ROM             (1<<2)
 #define IMR_PTM             (1<<1)
 #define IMR_PRM             (1<<0)
 
+#define ISR_LNKCHGS			(1<<5)
+#define ISR_UDRUNS			(1<<4)
 #define ISR_ROOS            (1<<3)
 #define ISR_ROS             (1<<2)
 #define ISR_PTS             (1<<1)
 #define ISR_PRS             (1<<0)
-#define ISR_CLR_STATUS      (ISR_ROOS | ISR_ROS | ISR_PTS | ISR_PRS)
+#define ISR_CLR_STATUS      (ISR_LNKCHGS | ISR_UDRUNS | ISR_ROOS | ISR_ROS | ISR_PTS | ISR_PRS)
 
 #define EPCR_REEP           (1<<5)
 #define EPCR_WEP            (1<<4)
